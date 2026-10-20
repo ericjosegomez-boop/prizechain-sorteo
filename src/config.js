@@ -5,7 +5,7 @@ import { bsc } from 'wagmi/chains'
 export const CONTRACTS = {
   // v3: pega aquí la dirección del contrato nuevo (Fase 5 del plan).
   // Contrato viejo, bloqueado en la Ronda #1: 0xa7EA6501B774E9f9b3AD74e42c7f7c8EDC906cEe
-  SORTEO: 'PEGAR_DIRECCION_DEL_CONTRATO_V3',
+  SORTEO: '0x56439e70A78621Ead3E48fFc4cf0352F217B48A3',
   PRIZE:  '0x8967442975F6081Bd1218778AE6a01a83d4Bd8C5',
   USDT:   '0x55d398326f99059fF775485246999027B3197955',
 }
