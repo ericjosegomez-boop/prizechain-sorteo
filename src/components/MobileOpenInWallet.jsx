@@ -29,7 +29,7 @@ export default function MobileOpenInWallet() {
 
   const host     = window.location.host                       // prizechain-sorteo.vercel.app
   const fullUrl  = window.location.origin + window.location.pathname
-  const metamask = `https://metamask.app.link/dapp/${host}${window.location.pathname}`
+  const metamask = `https://link.metamask.io/dapp/${host}${window.location.pathname}`
   // coin_id 20000714 = BNB Smart Chain en Trust Wallet
   const trust    = `https://link.trustwallet.com/open_url?coin_id=20000714&url=${encodeURIComponent(fullUrl)}`
 
