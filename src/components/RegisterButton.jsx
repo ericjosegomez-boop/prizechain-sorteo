@@ -6,7 +6,7 @@ import { formatUnits } from 'viem'
 
 export default function RegisterButton({
   canRegister, isRegistered, tickets, registeredTickets,
-  roundStatus, isPaused, prizeBalance, ticketSize, onSuccess,
+  roundStatus, regOpen, isPaused, prizeBalance, ticketSize, onSuccess,
 }) {
   const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract()
 
@@ -57,7 +57,9 @@ export default function RegisterButton({
   }
 
   // Registro cerrado
-  if (roundStatus !== 1) {
+  // v3: antes exigía roundStatus === 1, y una ronda nueva está en 0 (Unset) hasta el
+  //     primer registro, así que nadie podía registrarse desde la dApp.
+  if (!regOpen) {
     return (
       <div>
         <div style={infoBox}>El período de registro está cerrado. Vuelve en la próxima ronda.</div>

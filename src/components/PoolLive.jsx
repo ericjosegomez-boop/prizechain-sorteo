@@ -119,6 +119,7 @@ export default function PoolLive({ upcomingId }) {
     const s = Number(data[0])
     if (s === 3) return { label: fmtAddr(data[8]) + ' ganó', color: '#6BCB8B' }
     if (s === 4) return { label: 'Sin ganador', color: '#9CA3AF' }
+    if (s === 5) return { label: 'Saltada (sin boletos)', color: '#6B7280' }
     return { label: '—', color: '#6B7280' }
   }
 

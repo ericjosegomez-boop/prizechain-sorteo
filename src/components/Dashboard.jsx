@@ -38,6 +38,15 @@ export default function Dashboard() {
     address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'currentAvailableReward',
     query: { refetchInterval: 15_000 },
   })
+  // v3: la ronda que viene queda "Unset" (0) hasta que alguien interactúa con ella.
+  //     Para mostrar su registro se calcula desde nextDrawAt − minRegistrationAge.
+  const { data: nextDrawAt } = useReadContract({
+    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'nextDrawAt',
+    query: { refetchInterval: 30_000 },
+  })
+  const { data: minRegAge } = useReadContract({
+    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'minRegistrationAge',
+  })
   const { data: isPaused } = useReadContract({
     address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'isPrizePaused',
   })
@@ -49,17 +58,22 @@ export default function Dashboard() {
   const registeredTickets = myRegisteredTickets ? Number(myRegisteredTickets) : 0
   const pool              = poolTotal ? Number(poolTotal) : 0
   const roundStatus       = roundData ? Number(roundData[0]) : 0
-  const regClosesAt       = roundData ? Number(roundData[2]) : 0
-  const scheduledAt       = roundData ? Number(roundData[1]) : 0
+  const unsetRound        = roundData ? Number(roundData[0]) === 0 : false
+  const scheduledAt       = unsetRound ? Number(nextDrawAt ?? 0) : (roundData ? Number(roundData[1]) : 0)
+  const regClosesAt       = unsetRound
+    ? (nextDrawAt && minRegAge ? Number(nextDrawAt) - Number(minRegAge) : 0)
+    : (roundData ? Number(roundData[2]) : 0)
   const prizeAmountRaw    = roundData ? roundData[6] : 0n
   const prizeUSDT         = availableReward ? Number(formatUnits(availableReward, 18)).toFixed(2) : '0.00'
-  const canRegister       = tickets > 0 && !isRegistered && roundStatus === 1 && !isPaused
+  const nowSec            = Math.floor(Date.now() / 1000)
+  const regOpen           = (roundStatus === 0 || roundStatus === 1) && regClosesAt > nowSec
+  const canRegister       = tickets > 0 && !isRegistered && regOpen && !isPaused
   const pct = pool > 0 && (isRegistered ? registeredTickets : tickets) > 0
     ? ((isRegistered ? registeredTickets : tickets) / (pool + (isRegistered ? 0 : tickets))) * 100 : 0
 
   const now = Math.floor(Date.now() / 1000)
   const drawActive = roundStatus === 2 || roundStatus === 3 || roundStatus === 4 ||
-    (roundStatus === 1 && scheduledAt > 0 && now >= scheduledAt)
+    ((roundStatus === 0 || roundStatus === 1) && scheduledAt > 0 && now >= scheduledAt)
 
   function refetchAll() {
     refetchPreview(); refetchRound(); refetchPool(); refetchMyTickets()
@@ -80,7 +94,7 @@ export default function Dashboard() {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
         <div>
           <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 2 }}>Ronda #{upcomingId?.toString() ?? '—'}</p>
-          <RoundStatusBadge status={roundStatus} />
+          <RoundStatusBadge status={regOpen ? 1 : roundStatus} />
         </div>
         {isPaused && (
           <div style={{ background: '#2A1800', border: '0.5px solid #854F0B', borderRadius: 6, padding: '4px 10px', fontSize: 12, color: '#FDE68A' }}>
@@ -105,7 +119,7 @@ export default function Dashboard() {
       {activeTab === 'participar' && (
         <>
           <PrizeCard amount={prizeUSDT} pool={pool} />
-          {regClosesAt > 0 && roundStatus === 1 && (
+          {regClosesAt > 0 && (roundStatus === 0 || roundStatus === 1) && (
             <Countdown regClosesAt={regClosesAt} scheduledAt={scheduledAt} />
           )}
           <TicketCard
@@ -115,7 +129,7 @@ export default function Dashboard() {
           />
           <RegisterButton
             canRegister={canRegister} isRegistered={isRegistered} tickets={tickets}
-            registeredTickets={registeredTickets} roundStatus={roundStatus}
+            registeredTickets={registeredTickets} roundStatus={roundStatus} regOpen={regOpen}
             isPaused={!!isPaused} prizeBalance={prizeBalance} ticketSize={ticketSize}
             onSuccess={refetchAll}
           />
@@ -173,6 +187,7 @@ function RoundStatusBadge({ status }) {
     2: { bg:'#2A1800', border:'#854F0B', color:'#FDE68A', dot:'#F59E0B', label:'Sorteo en curso'  },
     3: { bg:'#0A1F12', border:'#27500A', color:'#6BCB8B', dot:'#10B981', label:'Completada'       },
     4: { bg:'#1E0A3C', border:'#534AB7', color:'#C4BCFC', dot:'#A855F7', label:'Sin ganador'      },
+    5: { bg:'#1A0A2E', border:'#4C1D95', color:'#9CA3AF', dot:'#6B7280', label:'Saltada'          },
   }
   const c = C[status] ?? { bg:'#1A0A2E', border:'#4C1D95', color:'#9CA3AF', dot:'#6B7280', label:'Sin iniciar' }
   return (

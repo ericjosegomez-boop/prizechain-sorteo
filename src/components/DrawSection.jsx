@@ -11,7 +11,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent, useReadContract } from 'wagmi'
 import { useAccount } from 'wagmi'
-import { formatUnits } from 'viem'
+import { formatUnits, keccak256, toHex } from 'viem'
 import { CONTRACTS, SORTEO_ABI } from '../config'
 
 // Estados del panel
@@ -22,7 +22,11 @@ const DRAW_STATE = {
   AWAITING:  'awaiting',   // esperando callback de Chainlink VRF
   WINNER:    'winner',     // ganador seleccionado
   NO_WINNER: 'no_winner',  // nadie elegible
+  SKIPPED:   'skipped',    // v3: ronda sin boletos, se abrió la siguiente
 }
+
+const ROUND_SKIPPED_TOPIC = keccak256(toHex('RoundSkipped(uint256,uint64)'))
+const VRF_RETRY_DELAY     = 24 * 60 * 60
 
 export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAmount, onDrawComplete }) {
   const { address } = useAccount()
@@ -34,18 +38,33 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
   const [secondsLeft, setSecondsLeft] = useState(0)
   const tickRef = useRef(null)
 
+  // v3: la ronda sorteada pasa a ser lastRequestedRoundId y la "próxima" ya es otra.
+  //     Se lee aparte para mostrar la espera de Chainlink y el reintento.
+  const { data: lastId } = useReadContract({
+    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'lastRequestedRoundId',
+    query: { refetchInterval: 10_000 },
+  })
+  const { data: lastRound, refetch: refetchLast } = useReadContract({
+    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'rounds',
+    args: [lastId], query: { enabled: !!lastId && lastId > 0n, refetchInterval: 10_000 },
+  })
+  const lastStatus      = lastRound ? Number(lastRound[0]) : -1
+  const lastRequestedAt = lastRound ? Number(lastRound[3]) : 0
+
   // ── Derivar estado inicial desde roundStatus ──────────────
   useEffect(() => {
     const now = Math.floor(Date.now() / 1000)
+    if (lastStatus === 2) { setDrawState(DRAW_STATE.AWAITING); return }
+    if (drawState === DRAW_STATE.SKIPPED) return
     if (roundStatus === 3) { setDrawState(DRAW_STATE.WINNER);   return }
     if (roundStatus === 4) { setDrawState(DRAW_STATE.NO_WINNER); return }
     if (roundStatus === 2) { setDrawState(DRAW_STATE.AWAITING);  return }
-    if (roundStatus === 1 && scheduledAt > 0 && now >= scheduledAt) {
+    if ((roundStatus === 0 || roundStatus === 1) && scheduledAt > 0 && now >= scheduledAt) {
       setDrawState(DRAW_STATE.READY)
     } else {
       setDrawState(DRAW_STATE.NOT_YET)
     }
-  }, [roundStatus, scheduledAt])
+  }, [roundStatus, scheduledAt, lastStatus])
 
   // ── Countdown hasta la hora del sorteo ───────────────────
   useEffect(() => {
@@ -114,13 +133,26 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
   // ── Escribir: requestDraw / advance ───────────────────────
   const { writeContract, isPending: isSending, error: writeErr } = useWriteContract()
 
-  const { isLoading: isConfirming, isSuccess: txConfirmed } = useWaitForTransactionReceipt({
+  const { isLoading: isConfirming, isSuccess: txConfirmed, data: receipt } = useWaitForTransactionReceipt({
     hash: txHash,
   })
 
   useEffect(() => {
-    if (txConfirmed) setDrawState(DRAW_STATE.AWAITING)
+    if (!txConfirmed) return
+    const skipped = receipt?.logs?.some(l => l.topics?.[0] === ROUND_SKIPPED_TOPIC)
+    setDrawState(skipped ? DRAW_STATE.SKIPPED : DRAW_STATE.AWAITING)
+    refetchLast()
+    if (onDrawComplete) onDrawComplete()
   }, [txConfirmed])
+
+  function handleRetry() {
+    writeContract(
+      { address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'retryDraw' },
+      { onSuccess(hash) { setTxHash(hash); setDrawState(DRAW_STATE.SENDING) } }
+    )
+  }
+  const canRetry = lastStatus === 2 && lastRequestedAt > 0 &&
+    Math.floor(Date.now() / 1000) >= lastRequestedAt + VRF_RETRY_DELAY
 
   function handleRequestDraw() {
     writeContract(
@@ -182,7 +214,8 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
           </div>
           <p style={{ fontSize: 13, color: '#9CA3AF', marginBottom: 14, lineHeight: 1.6 }}>
             La ronda #{roundId?.toString()} está lista. Cualquier persona puede ejecutar el sorteo.
-            El USDT se transfiere automáticamente al ganador.
+            El USDT se transfiere automáticamente al ganador. Si la ronda no tiene boletos,
+            se cierra sola y se abre la siguiente.
           </p>
           <button onClick={handleRequestDraw} disabled={isSending} style={{
             width: '100%', padding: 14, borderRadius: 10,
@@ -194,7 +227,9 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
           </button>
           {writeErr && (
             <p style={{ fontSize: 12, color: '#EF4444', marginTop: 8, textAlign: 'center' }}>
-              {writeErr.message?.includes('No prize') ? 'El contrato no tiene USDT como premio.' :
+              {writeErr.message?.includes('No USDT funded') ? 'El contrato no tiene USDT como premio. El owner debe fondearlo.' :
+               writeErr.message?.includes('Retry too early') ? 'Aún no pasan 24 horas desde la solicitud a Chainlink.' :
+               writeErr.message?.includes('Too early') ? 'Todavía no es la hora del sorteo.' :
                writeErr.message?.includes('No tickets') ? 'No hay boletos registrados en esta ronda.' :
                'Error al ejecutar. Intenta de nuevo.'}
             </p>
@@ -225,6 +260,18 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
         </div>
       )}
 
+      {/* ── SKIPPED: ronda sin boletos (v3) ── */}
+      {drawState === DRAW_STATE.SKIPPED && (
+        <div style={{ ...card('#2D1B4E', '#4C1D95'), textAlign: 'center' }}>
+          <p style={{ fontSize: 15, fontWeight: 500, color: '#F3F0FF', marginBottom: 6 }}>
+            La ronda no tenía boletos y se cerró
+          </p>
+          <p style={{ fontSize: 12, color: '#9CA3AF', lineHeight: 1.6 }}>
+            El premio se mantiene para la próxima ronda, que ya tiene el registro abierto.
+          </p>
+        </div>
+      )}
+
       {/* ── AWAITING: esperando Chainlink VRF ── */}
       {drawState === DRAW_STATE.AWAITING && (
         <div style={{ ...card('#2D1B4E', '#4C1D95'), textAlign: 'center' }}>
@@ -250,6 +297,17 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
           <div style={{ background: '#1A0A2E', borderRadius: 8, padding: '8px 14px', fontSize: 12, color: '#6B7280' }}>
             Esta página se actualizará automáticamente cuando llegue el resultado.
           </div>
+          {canRetry && (
+            <div style={{ marginTop: 12 }}>
+              <p style={{ fontSize: 12, color: '#FDE68A', marginBottom: 8 }}>
+                Chainlink no respondió en 24 horas. Cualquiera puede volver a pedir el número.
+              </p>
+              <button onClick={handleRetry} disabled={isSending} style={{
+                width: '100%', padding: 12, borderRadius: 10, background: '#F59E0B',
+                color: '#1A0A2E', border: 'none', fontSize: 14, fontWeight: 600, cursor: 'pointer',
+              }}>{isSending ? 'Confirmando en wallet...' : 'Reintentar sorteo'}</button>
+            </div>
+          )}
           <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
         </div>
       )}
