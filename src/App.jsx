@@ -4,6 +4,7 @@ import { useAccount, useReadContract } from 'wagmi'
 import { formatUnits } from 'viem'
 import { useState } from 'react'
 import Dashboard from './components/Dashboard'
+import MobileOpenInWallet from './components/MobileOpenInWallet'
 import { CONTRACTS, SORTEO_ABI } from './config'
 
 const C = {
@@ -15,23 +16,23 @@ const C = {
 }
 
 const FAQ_ES=[
-  {q:'¿Necesito comprar boletos?',a:'No. Los boletos se calculan automáticamente según cuántos tokens PRIZE tienes. Por cada 751 PRIZE obtienes 1 boleto, hasta un máximo de 50.'},
+  {q:'¿Necesito comprar boletos?',a:'No. Los boletos se calculan automáticamente según cuántos tokens PRIZE tienes. Cada boleto equivale al 0.1% del supply circulante (hoy unos 760 PRIZE), hasta un máximo de 50.'},
   {q:'¿Se mueven mis tokens PRIZE?',a:'No. El contrato solo lee tu balance. Nunca transfiere ni bloquea tus tokens. Siguen siendo tuyos en todo momento.'},
   {q:'¿Cómo sé que el sorteo es justo?',a:'El ganador lo elige Chainlink VRF — un servicio externo de números aleatorios criptográficamente verificables. Nadie puede manipular el resultado.'},
   {q:'¿Cómo recibo el premio si gano?',a:'Automáticamente. El contrato transfiere el USDT directamente a tu wallet en el mismo instante del sorteo. No hay que reclamar nada.'},
   {q:'¿Qué pasa si nadie gana?',a:'El USDT no desaparece. Se suma al premio de la siguiente ronda, haciendo el próximo sorteo más grande.'},
   {q:'¿Cada cuánto hay sorteo?',a:'Cada 7 días. Cualquier persona puede ejecutarlo cuando llega la hora pagando solo el gas de BSC (centavos de dólar).'},
-  {q:'¿Qué wallet puedo usar?',a:'Cualquier wallet compatible con BSC Mainnet: MetaMask, Trust Wallet, Coinbase Wallet, y más.'},
+  {q:'¿Qué wallet puedo usar?',a:'Cualquier wallet compatible con BSC Mainnet: MetaMask, Trust Wallet, Coinbase Wallet, y más. En el celular, abre esta página desde el navegador interno de tu wallet: la conexión es inmediata.'},
   {q:'¿Cuánto cuesta registrarme?',a:'Solo el gas de BSC — aproximadamente $0.01 USD.'},
 ]
 const FAQ_EN=[
-  {q:'Do I need to buy tickets?',a:'No. Tickets are calculated automatically based on how many PRIZE tokens you hold. You get 1 ticket per 751 PRIZE, up to a maximum of 50.'},
+  {q:'Do I need to buy tickets?',a:'No. Tickets are calculated automatically based on how many PRIZE tokens you hold. Each ticket equals 0.1% of the circulating supply (about 760 PRIZE today), up to a maximum of 50.'},
   {q:'Do my PRIZE tokens move?',a:'No. The contract only reads your balance. It never transfers or locks your tokens. They remain yours at all times.'},
   {q:'How do I know the draw is fair?',a:'The winner is chosen by Chainlink VRF — an external service providing cryptographically verifiable random numbers. Nobody can manipulate the result.'},
   {q:'How do I receive the prize if I win?',a:'Automatically. The contract transfers USDT directly to your wallet the moment the draw occurs. There is nothing to claim.'},
   {q:'What happens if nobody wins?',a:'The USDT does not disappear. It is added to the next round prize, making the next draw larger.'},
   {q:'How often is the draw?',a:'Every 7 days. Anyone can execute it when the time comes by paying only BSC gas (cents of a dollar).'},
-  {q:'Which wallet can I use?',a:'Any wallet compatible with BSC Mainnet: MetaMask, Trust Wallet, Coinbase Wallet, and more.'},
+  {q:'Which wallet can I use?',a:'Any wallet compatible with BSC Mainnet: MetaMask, Trust Wallet, Coinbase Wallet, and more. On mobile, open this page from your wallet\'s built-in browser: it connects instantly.'},
   {q:'How much does it cost to register?',a:'Only BSC gas — approximately $0.01 USD.'},
 ]
 const STEPS_ES=[
@@ -212,6 +213,7 @@ function LandingPage() {
             <p style={{fontSize:17,color:C.grayLt,lineHeight:1.7,marginBottom:32,maxWidth:480}}>
               Holders de PRIZE participan automáticamente. Sin comprar boletos. El premio en USDT llega directo a tu wallet si ganas.
             </p>
+            <div style={{marginTop:-16,marginBottom:28}}><MobileOpenInWallet/></div>
             <div style={{display:'flex',alignItems:'center',gap:20,flexWrap:'wrap',marginBottom:40}}>
               <div style={{background:`linear-gradient(135deg,${C.cyanDim},${C.cyan})`,borderRadius:14,padding:'18px 28px',textAlign:'center',minWidth:140}}>
                 <p style={{fontSize:11,color:'rgba(0,0,0,.6)',fontWeight:600,marginBottom:4}}>PREMIO ACTUAL</p>

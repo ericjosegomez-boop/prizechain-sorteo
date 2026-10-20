@@ -1,6 +1,10 @@
 // src/config.js
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
+import {
+  metaMaskWallet, trustWallet, walletConnectWallet, coinbaseWallet,
+} from '@rainbow-me/rainbowkit/wallets'
 import { bsc } from 'wagmi/chains'
+import { http, fallback } from 'wagmi'
 
 export const CONTRACTS = {
   // v3: pega aquí la dirección del contrato nuevo (Fase 5 del plan).
@@ -11,10 +15,27 @@ export const CONTRACTS = {
 }
 
 export const wagmiConfig = getDefaultConfig({
-  appName:   'PRIZECHAIN Sorteo',
-  projectId: 'f8fb9c8230a9d4a4080470499a0f30fa',
-  chains:    [bsc],
-  ssr:       false,
+  appName:        'PRIZECHAIN Sorteo',
+  appDescription: 'Sorteo semanal para holders de PRIZE en BSC',
+  appUrl:         'https://prizechain-sorteo.vercel.app',   // debe coincidir con el dominio permitido en cloud.reown.com
+  appIcon:        'https://prizechain-sorteo.vercel.app/logo.png',
+  projectId:      'f8fb9c8230a9d4a4080470499a0f30fa',
+  chains:         [bsc],
+  // Wallets que se muestran al tocar "Conectar Wallet". Trust Wallet no viene por defecto.
+  wallets: [
+    { groupName: 'Recomendadas', wallets: [metaMaskWallet, trustWallet] },
+    { groupName: 'Otras',        wallets: [walletConnectWallet, coinbaseWallet] },
+  ],
+  // Varios nodos de BSC: si uno falla o limita, la web usa el siguiente.
+  transports: {
+    [bsc.id]: fallback([
+      http('https://bsc-dataseed.bnbchain.org'),
+      http('https://bsc-dataseed1.binance.org'),
+      http('https://bsc-rpc.publicnode.com'),
+      http(),
+    ]),
+  },
+  ssr: false,
 })
 
 // ABI completo del contrato v3, generado al compilar PrizeQuickDraw_v3.sol (solc 0.8.24, viaIR)
