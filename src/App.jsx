@@ -361,9 +361,10 @@ function Footer() {
           <span style={{fontSize:13,color:C.gray}}>PRIZECHAIN Sorteo · BSC Mainnet</span>
         </div>
         <div style={{display:'flex',gap:24,fontSize:13,color:C.gray,flexWrap:'wrap'}}>
+          <a href="/guia.html" style={{color:C.cyan,fontWeight:600}}>Guía paso a paso</a>
           <a href={`https://bscscan.com/address/${CONTRACTS.SORTEO}`} target="_blank" rel="noreferrer">Contrato en BscScan</a>
           <a href="https://vrf.chain.link" target="_blank" rel="noreferrer">Chainlink VRF</a>
-          <span>Verificado en Sourcify</span>
+          <span>Verificado en BscScan</span>
         </div>
       </div>
     </footer>

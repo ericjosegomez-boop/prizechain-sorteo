@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cómo participar · Sorteo PRIZECHAIN</title>
+<meta name="description" content="Guía paso a paso para participar en el sorteo semanal de PRIZECHAIN con MetaMask.">
+<meta name="theme-color" content="#050D1A">
+<link rel="icon" href="/logo.png">
+<style>
+  :root{
+    --bg:#050D1A; --card:#0A1628; --card2:#0D1E35; --line:#1B3A5C; --line2:#0E4D7A;
+    --cyan:#00D4FF; --gold:#F59E0B; --text:#F0F9FF; --mute:#94A3B8; --dim:#64748B;
+    --ok:#10B981; --warn:#F59E0B; --mm:#F6851B;
+    color-scheme:dark;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--text)}
+  body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;font-size:16px;line-height:1.55;
+       padding:env(safe-area-inset-top,0) max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
+  .wrap{max-width:560px;margin:0 auto}
+  header{display:flex;align-items:center;gap:10px;padding:18px 0 8px}
+  header img{width:40px;height:40px;border-radius:50%;border:2px solid var(--gold)}
+  .brand{font-weight:800;font-size:20px;letter-spacing:.2px}
+  .brand b{color:var(--cyan)}
+  .tag{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:1px 7px;margin-left:4px}
+  h1{font-size:28px;line-height:1.15;margin:18px 0 8px;text-wrap:balance}
+  .lead{color:var(--mute);margin:0 0 18px}
+  .facts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 22px}
+  .fact{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+  .fact strong{display:block;font-size:15px;color:var(--gold)}
+  .fact span{font-size:11.5px;color:var(--mute)}
+  ol.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:s}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px 16px 18px;counter-increment:s;position:relative}
+  .step h2{font-size:17px;margin:0 0 6px;display:flex;align-items:center;gap:10px}
+  .step h2::before{content:counter(s);flex:0 0 30px;height:30px;border-radius:9px;background:rgba(0,212,255,.12);border:1px solid var(--line2);
+       color:var(--cyan);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center}
+  .step p{margin:6px 0;color:var(--mute);font-size:15px}
+  .step ul{margin:6px 0;padding-left:20px;color:var(--mute);font-size:15px}
+  .step li{margin:3px 0}
+  .step strong{color:var(--text)}
+  .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .btn{flex:1 1 150px;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:46px;padding:10px 14px;border-radius:12px;
+       font-weight:700;font-size:15px;text-decoration:none;color:#fff;border:0;cursor:pointer;font-family:inherit}
+  .btn.mm{background:var(--mm)} .btn.cy{background:var(--cyan);color:#04121F} .btn.gh{background:var(--card2);border:1px solid var(--line2);color:var(--text)}
+  .btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+  .addr{margin-top:10px;background:var(--bg);border:1px dashed var(--line2);border-radius:10px;padding:10px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;
+        font-size:13px;word-break:break-all;color:var(--text);user-select:all}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin-top:10px;font-size:14px}
+  .kv dt{color:var(--dim)} .kv dd{margin:0;color:var(--text)}
+  .note{margin-top:10px;font-size:13.5px;border-radius:10px;padding:10px 12px;background:rgba(245,158,11,.08);border:1px solid rgba(245,158,11,.35);color:#FDE68A}
+  .note.ok{background:rgba(16,185,129,.08);border-color:rgba(16,185,129,.35);color:#A7F3D0}
+  .safe{margin-top:22px;background:var(--card);border:1px solid rgba(239,68,68,.35);border-radius:16px;padding:16px}
+  .safe h2{font-size:16px;margin:0 0 6px;color:#FCA5A5}
+  .safe ul{margin:0;padding-left:20px;color:var(--mute);font-size:14.5px}
+  footer{margin-top:22px;font-size:12.5px;color:var(--dim);text-align:center}
+  footer a{color:var(--cyan)}
+  .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ok);color:#04121F;
+         font-weight:700;padding:10px 16px;border-radius:999px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+  .toast.on{opacity:1}
+  @media (prefers-reduced-motion:reduce){.toast{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <img src="/logo.png" alt="">
+    <span class="brand"><b>PRIZE</b>CHAIN</span><span class="tag">Sorteo</span>
+  </header>
+
+  <h1>Participa en el sorteo semanal en 7 pasos</h1>
+  <p class="lead">Tus PRIZE se convierten en boletos. Tus tokens nunca salen de tu wallet, y si ganas, el premio en USDT llega solo.</p>
+
+  <div class="facts">
+    <div class="fact"><strong>~760</strong><span>PRIZE por boleto</span></div>
+    <div class="fact"><strong>50</strong><span>boletos máximo</span></div>
+    <div class="fact"><strong>Dom 20:00</strong><span>sorteo (hora Chile)</span></div>
+  </div>
+
+  <ol class="steps">
+    <li class="step">
+      <h2>Descarga MetaMask</h2>
+      <p>Es la wallet donde vas a guardar tus PRIZE. Es gratis. Descárgala solo desde la tienda oficial de tu teléfono.</p>
+      <div class="btns">
+        <a class="btn gh" href="https://play.google.com/store/apps/details?id=io.metamask" target="_blank" rel="noopener">Android · Play Store</a>
+        <a class="btn gh" href="https://apps.apple.com/app/metamask/id1438144202" target="_blank" rel="noopener">iPhone · App Store</a>
+      </div>
+    </li>
+
+    <li class="step">
+      <h2>Crea tu cuenta con Google</h2>
+      <ul>
+        <li>Abre MetaMask y toca <strong>Crear una billetera nueva</strong>.</li>
+        <li>Elige <strong>Continuar con Google</strong> y entra con tu cuenta.</li>
+        <li>Crea una <strong>contraseña</strong> fuerte para la wallet.</li>
+      </ul>
+      <div class="note">Guarda bien esa contraseña. Si cambias de teléfono, la necesitas junto con tu Google para recuperar la wallet. Nadie de PRIZECHAIN te la va a pedir.</div>
+    </li>
+
+    <li class="step">
+      <h2>Activa la red BNB Smart Chain</h2>
+      <ul>
+        <li>Arriba en MetaMask, toca el selector de red.</li>
+        <li>Elige <strong>BNB Smart Chain</strong> (está en las redes populares; si te lo pide, toca <strong>Agregar</strong>).</li>
+      </ul>
+      <p>PRIZE y el sorteo funcionan en esa red.</p>
+    </li>
+
+    <li class="step">
+      <h2>Agrega el token PRIZE</h2>
+      <ul>
+        <li>En la pestaña <strong>Tokens</strong>, toca <strong>Importar tokens</strong> (o <strong>+</strong>).</li>
+        <li>Red: <strong>BNB Smart Chain</strong>. Pega la dirección del contrato:</li>
+      </ul>
+      <div class="addr" id="addr">0x8967442975F6081Bd1218778AE6a01a83d4Bd8C5</div>
+      <div class="btns"><button class="btn cy" type="button" data-copy="0x8967442975F6081Bd1218778AE6a01a83d4Bd8C5">Copiar dirección de PRIZE</button></div>
+      <dl class="kv"><dt>Símbolo</dt><dd>PRIZE</dd><dt>Decimales</dt><dd>18</dd></dl>
+      <p>Toca <strong>Siguiente</strong> e <strong>Importar</strong>. Ahora verás tu saldo de PRIZE.</p>
+    </li>
+
+    <li class="step">
+      <h2>Consigue BNB y compra PRIZE</h2>
+      <ul>
+        <li><strong>BNB:</strong> en MetaMask toca <strong>Comprar</strong>, o envíalo desde tu exchange a tu dirección de MetaMask por la red <strong>BSC (BEP-20)</strong>. Deja siempre un poco de BNB para el gas (centavos).</li>
+        <li><strong>PRIZE:</strong> abre PancakeSwap dentro de MetaMask con el botón de abajo, conecta tu wallet y cambia BNB por PRIZE.</li>
+      </ul>
+      <div class="btns"><a class="btn mm" id="pancake" href="https://link.metamask.io/dapp/pancakeswap.finance/swap?chain=bsc&amp;outputCurrency=0x8967442975F6081Bd1218778AE6a01a83d4Bd8C5">Comprar PRIZE en PancakeSwap</a></div>
+      <div class="note">El token cobra un 8% al comprar. Pon el <strong>slippage en 12%</strong> en PancakeSwap (icono de engranaje), o la compra puede fallar. Necesitas al menos ~760 PRIZE para 1 boleto.</div>
+    </li>
+
+    <li class="step">
+      <h2>Regístrate en el sorteo</h2>
+      <ul>
+        <li>Abre la web del sorteo <strong>dentro de MetaMask</strong> con este botón.</li>
+        <li>Toca <strong>Conectar Wallet</strong> → <strong>MetaMask</strong>.</li>
+        <li>Toca <strong>Registrarme</strong> y confirma. Solo pagas el gas (centavos).</li>
+      </ul>
+      <div class="btns">
+        <a class="btn mm" id="dapp" href="https://link.metamask.io/dapp/prizechain-sorteo.vercel.app">Abrir el sorteo en MetaMask</a>
+      </div>
+      <p>¿El botón no abre la app? En MetaMask toca el <strong>navegador</strong> 🌐 y escribe <strong>prizechain-sorteo.vercel.app</strong>.</p>
+      <div class="note ok">El registro no mueve tus PRIZE. Al confirmar, MetaMask mostrará <strong>“Sin cambios”</strong> en tu saldo: es lo correcto.</div>
+    </li>
+
+    <li class="step">
+      <h2>Espera el sorteo</h2>
+      <ul>
+        <li>El sorteo es cada <strong>domingo a las 20:00</strong> (hora de Chile). El registro cierra el <strong>sábado a las 20:00</strong>.</li>
+        <li><strong>No vendas ni muevas tus PRIZE</strong> hasta después del sorteo: se revisa tu saldo al elegir ganador.</li>
+        <li>Si ganas, el USDT llega solo a tu wallet. No hay que reclamar nada.</li>
+        <li>Cada semana es una ronda nueva: <strong>vuelve a registrarte</strong>.</li>
+      </ul>
+    </li>
+  </ol>
+
+  <section class="safe">
+    <h2>Para estar seguro</h2>
+    <ul>
+      <li>Nunca compartas tu contraseña ni tu frase secreta. Nadie del equipo te la va a pedir.</li>
+      <li>Usa solo esta web: <strong>prizechain-sorteo.vercel.app</strong>.</li>
+      <li>El ganador lo elige Chainlink VRF y el código del sorteo es público en BscScan.</li>
+    </ul>
+  </section>
+
+  <footer>
+    <a href="/">Ir al sorteo</a> · <a href="https://bscscan.com/address/0x56439e70A78621Ead3E48fFc4cf0352F217B48A3#code" target="_blank" rel="noopener">Contrato verificado</a>
+  </footer>
+</div>
+<div class="toast" id="toast" role="status" aria-live="polite">Copiado</div>
+<script>
+  // Si ya estamos dentro de una wallet, los botones abren la web directamente.
+  if (window.ethereum) {
+    document.getElementById('dapp').href = '/';
+    document.getElementById('pancake').href = 'https://pancakeswap.finance/swap?chain=bsc&outputCurrency=0x8967442975F6081Bd1218778AE6a01a83d4Bd8C5';
+  }
+  var toast = document.getElementById('toast');
+  document.querySelectorAll('[data-copy]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      var v = b.getAttribute('data-copy');
+      function done(){ toast.textContent = 'Dirección copiada'; toast.classList.add('on'); setTimeout(function(){ toast.classList.remove('on') }, 1800) }
+      if (navigator.clipboard) navigator.clipboard.writeText(v).then(done, sel); else sel();
+      function sel(){ var r = document.createRange(); r.selectNodeContents(document.getElementById('addr')); var s = getSelection(); s.removeAllRanges(); s.addRange(r); toast.textContent = 'Mantén presionado para copiar'; toast.classList.add('on'); setTimeout(function(){ toast.classList.remove('on') }, 2200) }
+    });
+  });
+</script>
+</body>
+</html>

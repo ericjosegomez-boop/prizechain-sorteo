@@ -48,6 +48,7 @@ export default function MobileOpenInWallet() {
         <a href={metamask} style={{ ...btn, background: '#F6851B' }}>Abrir en MetaMask</a>
         <a href={trust}    style={{ ...btn, background: '#3375BB' }}>Abrir en Trust Wallet</a>
       </div>
+      <a href="/guia.html" style={{ ...linkBtn, display: 'block' }}>¿Primera vez? Guía paso a paso: crear wallet y comprar PRIZE</a>
       <button onClick={copy} style={linkBtn}>
         {copied ? 'Enlace copiado ✓' : 'Otra wallet: copiar enlace y pegarlo en su navegador'}
       </button>
