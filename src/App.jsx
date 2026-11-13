@@ -138,6 +138,16 @@ function WinnerHighlight() {
   const winner=hasWinner?prevRound[8]:null
   const prize=hasWinner?Number(formatUnits(prevRound[6],18)).toFixed(2):null
   const roundNum=prevId?prevId.toString():null
+  // Primera ronda: no hay sorteo anterior, así que no corresponde decir "sin ganador".
+  if(upcomingId!==undefined&&!prevId) return (
+    <div style={{background:C.bgCard,border:`1px solid ${C.border}`,borderRadius:16,padding:24,animation:'fadeIn .4s ease'}}>
+      <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:8}}>
+        <span style={{fontSize:22}}>🚀</span>
+        <p style={{fontSize:15,fontWeight:600,color:C.cyan}}>Primer sorteo de PRIZECHAIN</p>
+      </div>
+      <p style={{fontSize:13,color:C.grayLt,lineHeight:1.6}}>Regístrate antes del cierre del registro para participar. Si ganas, el USDT llega solo a tu wallet.</p>
+    </div>
+  )
   return (
     <div style={{background:C.bgCard,border:`1px solid ${hasWinner?C.gold:C.border}`,borderRadius:16,padding:24,animation:'fadeIn .4s ease'}}>
       {hasWinner?(
