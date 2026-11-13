@@ -1,198 +1,114 @@
 // src/components/RegisterButton.jsx
+// Registro en la ronda: una sola transacción a register(). El contrato lee tu
+// saldo de PRIZE y te asigna los boletos; tus tokens no se mueven.
+
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
 import { useEffect } from 'react'
 import { CONTRACTS, SORTEO_ABI } from '../config'
-import { formatUnits } from 'viem'
+import { BUY_URL } from './Bits'
+import { fmtInt } from './ui'
+
+const plural = n => (n === 1 ? 'boleto' : 'boletos')
+
+function errorText(err) {
+  const m = `${err?.shortMessage ?? ''} ${err?.message ?? ''}`
+  if (/rejected|denied|cancel/i.test(m))      return 'Cancelaste la firma en tu wallet. Puedes intentarlo de nuevo.'
+  if (m.includes('Already registered'))        return 'Esta wallet ya está registrada en la ronda.'
+  if (m.includes('Registration closed'))       return 'El registro de esta ronda ya cerró.'
+  if (m.includes('Need >='))                   return 'Tu saldo de PRIZE no alcanza para un boleto.'
+  if (m.includes('Ticket pool full'))          return 'La tómbola de esta ronda está llena.'
+  if (m.includes('PRIZE token paused'))        return 'El token PRIZE está en pausa. Intenta más tarde.'
+  if (m.includes('Excluded'))                  return 'Esta wallet no puede participar en el sorteo.'
+  if (/insufficient funds|gas/i.test(m))       return 'Te falta BNB para pagar el gas. Basta con unos centavos de dólar en BNB.'
+  return 'No se pudo registrar. Revisa tu wallet e intenta de nuevo.'
+}
 
 export default function RegisterButton({
-  canRegister, isRegistered, tickets, registeredTickets,
-  roundStatus, regOpen, isPaused, prizeBalance, ticketSize, onSuccess,
+  isRegistered, tickets, registeredTickets, regOpen, isPaused,
+  balance, ticketSize, roundSize, pool, onSuccess,
 }) {
   const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract()
-
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash })
 
-  useEffect(() => {
-    if (isSuccess) { onSuccess() }
-  }, [isSuccess])
+  useEffect(() => { if (isSuccess) onSuccess() }, [isSuccess])
 
   function handleRegister() {
-    writeContract({
-      address:      CONTRACTS.SORTEO,
-      abi:          SORTEO_ABI,
-      functionName: 'register',
-    })
+    writeContract({ address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'register' })
   }
 
-  // Ya registrado
+  const txLink = txHash && (
+    <a className="small" href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer">Ver la transacción en BscScan</a>
+  )
+
   if (isRegistered) {
     return (
-      <div>
-        <div style={{ background: '#0A1F12', border: '0.5px solid #27500A', borderRadius: 10, padding: '12px 16px', marginBottom: 10 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ fontSize: 16 }}>✅</span>
-            <span style={{ fontSize: 14, fontWeight: 500, color: '#6BCB8B' }}>
-              Registrado con {registeredTickets} boleto{registeredTickets !== 1 ? 's' : ''}
-            </span>
-          </div>
-          <p style={{ fontSize: 12, color: '#9CA3AF', lineHeight: 1.6 }}>
-            Mantén tus PRIZE en esta wallet hasta el sorteo. Si los vendes antes, perderás la elegibilidad.
-          </p>
-        </div>
-        <button disabled style={btnStyle('disabled')}>
-          Ya estás registrado en esta ronda
-        </button>
+      <div className="note note--ok">
+        <strong>Estás en la tómbola con {registeredTickets} {plural(registeredTickets)}.</strong>{' '}
+        Mantén al menos {fmtInt(roundSize || ticketSize)} PRIZE en esta wallet hasta el sorteo: si tu saldo baja de eso,
+        tus boletos no cuentan.
       </div>
     )
   }
 
-  // Token pausado
-  if (isPaused) {
-    return (
-      <div>
-        <div style={warnBox}>El token PRIZE está en pausa de emergencia. El registro estará disponible cuando el equipo reactive el token.</div>
-        <button disabled style={btnStyle('disabled')}>Registro no disponible</button>
-      </div>
-    )
-  }
-
-  // Registro cerrado
-  // v3: antes exigía roundStatus === 1, y una ronda nueva está en 0 (Unset) hasta el
-  //     primer registro, así que nadie podía registrarse desde la dApp.
-  if (!regOpen) {
-    return (
-      <div>
-        <div style={infoBox}>El período de registro está cerrado. Vuelve en la próxima ronda.</div>
-        <button disabled style={btnStyle('disabled')}>Registro cerrado</button>
-      </div>
-    )
-  }
-
-  // Sin suficiente PRIZE
-  if (tickets === 0) {
-    const bal = prizeBalance ? Number(formatUnits(prizeBalance, 18)) : 0
-    const sz  = ticketSize   ? Number(formatUnits(ticketSize, 18))   : 800
-    return (
-      <div>
-        <div style={warnBox}>
-          Necesitas al menos {sz.toLocaleString('es', { maximumFractionDigits: 0 })} PRIZE para participar.
-          {bal > 0 && ` Te faltan ${Math.ceil(sz - bal).toLocaleString('es', { maximumFractionDigits: 0 })} PRIZE.`}
-        </div>
-        <a
-          href="https://pancakeswap.finance/swap"
-          target="_blank"
-          rel="noreferrer"
-          style={{
-            display: 'block', width: '100%', padding: 14,
-            background: '#2D1B4E', border: '0.5px solid #4C1D95',
-            borderRadius: 10, fontSize: 15, fontWeight: 500,
-            color: '#A855F7', textAlign: 'center', textDecoration: 'none',
-          }}
-        >
-          Comprar PRIZE en PancakeSwap ↗
-        </a>
-      </div>
-    )
-  }
-
-  // Transacción en curso
-  if (isPending || isConfirming) {
-    return (
-      <div style={{ background: '#2D1B4E', border: '0.5px solid #4C1D95', borderRadius: 10, padding: 20, textAlign: 'center' }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #4C1D95', borderTopColor: '#A855F7', borderRadius: '50%', animation: 'spin .8s linear infinite', margin: '0 auto 12px' }} />
-        <p style={{ fontSize: 14, fontWeight: 500, color: '#F3F0FF', marginBottom: 6 }}>
-          {isPending ? 'Confirma en tu wallet...' : 'Confirmando transacción...'}
-        </p>
-        <p style={{ fontSize: 12, color: '#9CA3AF' }}>
-          {isPending ? 'Revisa MetaMask o Trust Wallet' : 'Esperando confirmación en BSC'}
-        </p>
-        {txHash && (
-          <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer"
-            style={{ fontSize: 11, color: '#A855F7', display: 'block', marginTop: 8 }}>
-            Ver en BscScan ↗
-          </a>
-        )}
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      </div>
-    )
-  }
-
-  // Éxito
   if (isSuccess) {
     return (
-      <div style={{ background: '#0A1F12', border: '0.5px solid #27500A', borderRadius: 10, padding: 20, textAlign: 'center' }}>
-        <div style={{ fontSize: 32, marginBottom: 8 }}>🎉</div>
-        <p style={{ fontSize: 15, fontWeight: 500, color: '#6BCB8B', marginBottom: 6 }}>¡Registrado con éxito!</p>
-        <p style={{ fontSize: 12, color: '#9CA3AF', marginBottom: 10 }}>
-          Tus {tickets} boleto{tickets !== 1 ? 's' : ''} están en el pool.
-        </p>
-        {txHash && (
-          <a href={`https://bscscan.com/tx/${txHash}`} target="_blank" rel="noreferrer"
-            style={{ fontSize: 12, color: '#A855F7' }}>
-            Ver transacción en BscScan ↗
-          </a>
-        )}
+      <div className="note note--ok stack" style={{ gap: 6 }}>
+        <strong>¡Registrado! Tus {tickets} {plural(tickets)} ya están en la tómbola.</strong>
+        {txLink}
       </div>
     )
   }
 
-  // Error
-  if (writeError) {
-    const msg = writeError.message?.includes('Already registered')
-      ? 'Ya estás registrado en esta ronda.'
-      : writeError.message?.includes('Registration closed')
-      ? 'El registro ya cerró para esta ronda.'
-      : writeError.message?.includes('Insufficient')
-      ? 'Saldo de PRIZE insuficiente.'
-      : 'Hubo un error. Intenta de nuevo.'
-
+  if (isPaused) {
     return (
-      <div>
-        <div style={{ ...warnBox, marginBottom: 10 }}>{msg}</div>
-        <button onClick={handleRegister} style={btnStyle('primary')}>
-          Intentar de nuevo
-        </button>
+      <div className="stack" style={{ gap: 10 }}>
+        <p className="note note--warn">El token PRIZE está en pausa de emergencia. El registro vuelve cuando se reactive.</p>
+        <button className="btn btn--block" disabled>Registro no disponible</button>
       </div>
     )
   }
 
-  // Listo para registrarse
-  return (
-    <div>
-      <div style={{ background: '#1E0A3C', border: '0.5px solid #534AB7', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: '#C4BCFC', marginBottom: 10, lineHeight: 1.6 }}>
-        Con {tickets} boleto{tickets !== 1 ? 's' : ''} tu probabilidad actual es del {
-          tickets > 0 ? ((tickets / (tickets + 143)) * 100).toFixed(1) : '0'
-        }%. Tus PRIZE no se moverán de tu wallet.
+  if (!regOpen) {
+    return <p className="note note--info">El registro de esta ronda cerró. Podrás registrarte en la próxima apenas empiece.</p>
+  }
+
+  if (tickets === 0) {
+    const missing = Math.max(0, Math.ceil(ticketSize - balance))
+    return (
+      <div className="stack" style={{ gap: 10 }}>
+        <p className="note note--warn">
+          Necesitas {fmtInt(ticketSize)} PRIZE para tu primer boleto.
+          {balance > 0 && ` Te faltan ${fmtInt(missing)} PRIZE.`}
+        </p>
+        <a className="btn btn--ghost btn--block" href={BUY_URL} target="_blank" rel="noreferrer">Comprar PRIZE en PancakeSwap</a>
       </div>
-      <button onClick={handleRegister} style={btnStyle('primary')}>
-        Registrarme con {tickets} boleto{tickets !== 1 ? 's' : ''}
+    )
+  }
+
+  if (isPending || isConfirming) {
+    return (
+      <div className="panel stack" style={{ alignItems: 'center', textAlign: 'center', gap: 10 }} aria-live="polite">
+        <div className="spinner" />
+        <strong>{isPending ? 'Confirma el registro en tu wallet' : 'Registrando tus boletos en BSC…'}</strong>
+        <span className="small muted">{isPending ? 'Revisa MetaMask o Trust Wallet.' : 'Suele tardar unos segundos.'}</span>
+        {txLink}
+      </div>
+    )
+  }
+
+  const chance = (tickets / (pool + tickets)) * 100
+  return (
+    <div className="stack" style={{ gap: 10 }}>
+      {writeError && <p className="note note--bad" role="alert">{errorText(writeError)}</p>}
+      <button className="btn btn--gold btn--block btn--big" onClick={handleRegister}>
+        {writeError ? 'Intentar de nuevo' : `Registrarme con ${tickets} ${plural(tickets)}`}
       </button>
-      <p style={{ fontSize: 11, color: '#6B7280', textAlign: 'center', marginTop: 8 }}>
-        Solo pagas gas de BSC (~0.001 BNB · ~$0.50 USD)
+      <p className="small muted" style={{ textAlign: 'center' }}>
+        {pool > 0
+          ? `Con ${fmtInt(pool)} boletos ya en la tómbola, tu probabilidad sería del ${chance >= 99.95 ? '100' : chance.toLocaleString('es-CL', { maximumFractionDigits: 1 })}%. `
+          : 'Serías el primero en la tómbola. '}
+        Tus PRIZE no se mueven y solo pagas el gas, unos centavos de dólar.
       </p>
     </div>
   )
-}
-
-const warnBox = {
-  background: '#2A1800', border: '0.5px solid #854F0B',
-  borderRadius: 8, padding: '10px 14px',
-  fontSize: 12, color: '#FDE68A', lineHeight: 1.6, marginBottom: 10,
-}
-
-const infoBox = {
-  background: '#1E0A3C', border: '0.5px solid #534AB7',
-  borderRadius: 8, padding: '10px 14px',
-  fontSize: 12, color: '#C4BCFC', lineHeight: 1.6, marginBottom: 10,
-}
-
-function btnStyle(variant) {
-  const base = {
-    width: '100%', padding: '14px', borderRadius: 10,
-    fontSize: 15, fontWeight: 500, border: 'none',
-    transition: 'opacity .2s',
-  }
-  if (variant === 'primary')  return { ...base, background: '#A855F7', color: '#fff', cursor: 'pointer' }
-  if (variant === 'disabled') return { ...base, background: '#2D1B4E', color: '#6B7280', cursor: 'not-allowed', border: '0.5px solid #4C1D95' }
-  return base
 }

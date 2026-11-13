@@ -1,0 +1,34 @@
+PRIZECHAIN Sorteo: diseño nuevo de la web
+==========================================
+
+Qué cambia: solo el diseño de la página. El contrato es el mismo v4
+(0x9c2e3196B3e84B9d051391D6D392F29FD138ae5C) y la web lo usa igual que antes.
+
+Cómo subirlo (5 minutos)
+------------------------
+1. Descomprime este zip en tu computador.
+2. Entra a github.com y abre el repositorio de la web del sorteo.
+3. Toca el botón "Add file" y luego "Upload files".
+4. Abre la carpeta que descomprimiste, selecciona TODO lo que hay adentro
+   (las carpetas src y public, y los archivos index.html, package.json,
+   package-lock.json, vite.config.js y vercel.json) y arrástralo a la página de GitHub.
+   Arrastra las carpetas completas: GitHub reemplaza los archivos que ya existen.
+5. Abajo, en "Commit changes", escribe: Diseño nuevo de la web
+   y toca el botón verde "Commit changes".
+6. Vercel publica solo. En 1 a 2 minutos el despliegue debe decir "Ready".
+   Abre la web y recarga (en el celular, cierra y vuelve a abrir la pestaña).
+
+Opcional: limpiar archivos viejos
+---------------------------------
+Estos tres archivos ya no se usan. Puedes dejarlos (no molestan) o borrarlos en GitHub
+(ábrelos, toca los tres puntos "..." y "Delete file"):
+  src/components/PrizeCard.jsx
+  src/components/TicketCard.jsx
+  src/components/Countdown.jsx
+
+Para cuando tengas el video tutorial
+------------------------------------
+En src/App.jsx, línea con  const VIDEO_URL = ''
+pega el enlace "embed" de YouTube entre las comillas, por ejemplo:
+  const VIDEO_URL = 'https://www.youtube.com/embed/XXXXXXXX'
+La sección del video aparece sola en la portada.

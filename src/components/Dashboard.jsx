@@ -1,199 +1,143 @@
 // src/components/Dashboard.jsx
-import { useAccount, useReadContract } from 'wagmi'
-import { formatUnits } from 'viem'
+// Panel con la wallet conectada: tu boletera (izquierda) y la tómbola (derecha).
+// Las lecturas del contrato vienen de useSorteo (App las pasa como `s`).
+
 import { useState } from 'react'
-import { CONTRACTS, SORTEO_ABI } from '../config'
-import TicketCard      from './TicketCard'
-import PrizeCard       from './PrizeCard'
-import RegisterButton  from './RegisterButton'
-import Countdown       from './Countdown'
-import RoundHistory    from './RoundHistory'
-import DrawSection     from './DrawSection'
-import PoolLive        from './PoolLive'
+import Tombola        from './Tombola'
+import TicketStubs    from './TicketStubs'
+import RegisterButton from './RegisterButton'
+import DrawSection    from './DrawSection'
+import PoolLive       from './PoolLive'
+import RoundHistory   from './RoundHistory'
+import { NextMoment } from './Bits'
+import { StatusChip, useCountUp, fmtInt, fmtUsd, fmtWhen, shortAddr, celebrate } from './ui'
+import { formatUnits } from 'viem'
 
-export default function Dashboard() {
-  const { address } = useAccount()
-  const [activeTab, setActiveTab] = useState('participar')
+const fmtPct = p => (p >= 99.95 ? '100' : p.toLocaleString('es-CL', { maximumFractionDigits: 1 })) + '%'
 
-  const { data: upcomingId, isLoading: loadingId } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'upcomingRoundId',
-  })
-  const { data: preview, isLoading: loadingPreview, refetch: refetchPreview } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'previewTickets',
-    args: [address], query: { enabled: !!address },
-  })
-  const { data: roundData, isLoading: loadingRound, refetch: refetchRound } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'rounds',
-    args: [upcomingId], query: { enabled: !!upcomingId },
-  })
-  const { data: poolTotal, refetch: refetchPool } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'totalTickets',
-    args: [upcomingId], query: { enabled: !!upcomingId },
-  })
-  const { data: myRegisteredTickets, refetch: refetchMyTickets } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'walletTickets',
-    args: [upcomingId, address], query: { enabled: !!upcomingId && !!address },
-  })
-  const { data: availableReward } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'currentAvailableReward',
-    query: { refetchInterval: 15_000 },
-  })
-  // v3: la ronda que viene queda "Unset" (0) hasta que alguien interactúa con ella.
-  //     Para mostrar su registro se calcula desde nextDrawAt − minRegistrationAge.
-  const { data: nextDrawAt } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'nextDrawAt',
-    query: { refetchInterval: 30_000 },
-  })
-  const { data: minRegAge } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'minRegistrationAge',
-  })
-  const { data: isPaused } = useReadContract({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'isPrizePaused',
-  })
+export default function Dashboard({ s, address }) {
+  const [phase, setPhase]         = useState('idle')   // idle → fly → done (animación al registrarse)
+  const [burst, setBurst]         = useState(false)    // la tómbola gira un momento al recibir tus boletos
+  const [drawPhase, setDrawPhase] = useState(null)
 
-  const tickets           = preview ? Number(preview[0]) : 0
-  const ticketSize        = preview ? preview[1] : 0n
-  const prizeBalance      = preview ? preview[2] : 0n
-  const isRegistered      = myRegisteredTickets ? Number(myRegisteredTickets) > 0 : false
-  const registeredTickets = myRegisteredTickets ? Number(myRegisteredTickets) : 0
-  const pool              = poolTotal ? Number(poolTotal) : 0
-  const roundStatus       = roundData ? Number(roundData[0]) : 0
-  const unsetRound        = roundData ? Number(roundData[0]) === 0 : false
-  const scheduledAt       = unsetRound ? Number(nextDrawAt ?? 0) : (roundData ? Number(roundData[1]) : 0)
-  const regClosesAt       = unsetRound
-    ? (nextDrawAt && minRegAge ? Number(nextDrawAt) - Number(minRegAge) : 0)
-    : (roundData ? Number(roundData[2]) : 0)
-  const prizeAmountRaw    = roundData ? roundData[6] : 0n
-  const prizeUSDT         = availableReward ? Number(formatUnits(availableReward, 18)).toFixed(2) : '0.00'
-  const nowSec            = Math.floor(Date.now() / 1000)
-  const regOpen           = (roundStatus === 0 || roundStatus === 1) && regClosesAt > nowSec
-  const canRegister       = tickets > 0 && !isRegistered && regOpen && !isPaused
-  const pct = pool > 0 && (isRegistered ? registeredTickets : tickets) > 0
-    ? ((isRegistered ? registeredTickets : tickets) / (pool + (isRegistered ? 0 : tickets))) * 100 : 0
+  const prize = useCountUp(s.drawPrize, 1200)
 
-  const now = Math.floor(Date.now() / 1000)
-  const drawActive = roundStatus === 2 || roundStatus === 3 || roundStatus === 4 ||
-    ((roundStatus === 0 || roundStatus === 1) && scheduledAt > 0 && now >= scheduledAt)
+  const isRegistered   = s.myTickets > 0
+  const showRegistered = isRegistered || phase === 'done'
+  const shown          = isRegistered ? s.myTickets : s.tickets
+  const count          = useCountUp(shown, 700)
+  const canRegister    = s.tickets > 0 && !isRegistered && s.regOpen && !s.isPaused
+  const chancePool     = isRegistered ? s.pool : s.pool + s.tickets
+  const inPlay         = isRegistered || (s.regOpen && !s.isPaused)
+  const chance         = inPlay && shown > 0 && chancePool > 0 ? (shown / chancePool) * 100 : 0
+  const roundSize      = s.roundTicketSizeRaw ? Number(formatUnits(s.roundTicketSizeRaw, 18)) : s.ticketSize
+  const lowBalance     = isRegistered && s.roundTicketSizeRaw > 0n && s.balanceRaw < s.roundTicketSizeRaw
+  const spinning       = s.awaiting || drawPhase === 'sending' || drawPhase === 'awaiting' || burst
+  const id             = s.upcomingId ? s.upcomingId.toString() : '—'
 
-  function refetchAll() {
-    refetchPreview(); refetchRound(); refetchPool(); refetchMyTickets()
+  function onRegistered() {
+    setPhase('fly'); setBurst(true); celebrate()
+    setTimeout(() => { setPhase('done'); s.refetchAll() }, 750)
+    setTimeout(() => setBurst(false), 2600)
   }
 
-  if (loadingId || loadingPreview || loadingRound) {
+  if (s.loading) {
     return (
-      <div style={{ textAlign: 'center', padding: 48 }}>
-        <div style={{ width: 32, height: 32, border: '3px solid #4C1D95', borderTopColor: '#A855F7', borderRadius: '50%', animation: 'spin .8s linear infinite', margin: '0 auto 12px' }} />
-        <p style={{ fontSize: 13, color: '#6B7280' }}>Cargando datos del sorteo...</p>
-        <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-      </div>
+      <main className="wrap dash" aria-busy="true">
+        <div className="panel stack" style={{ alignItems: 'center', padding: 48 }}>
+          <div className="spinner" />
+          <p className="muted">Leyendo tus boletos en el contrato…</p>
+        </div>
+      </main>
     )
   }
 
   return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <div>
-          <p style={{ fontSize: 12, color: '#6B7280', marginBottom: 2 }}>Ronda #{upcomingId?.toString() ?? '—'}</p>
-          <RoundStatusBadge status={regOpen ? 1 : roundStatus} />
-        </div>
-        {isPaused && (
-          <div style={{ background: '#2A1800', border: '0.5px solid #854F0B', borderRadius: 6, padding: '4px 10px', fontSize: 12, color: '#FDE68A' }}>
-            Token en pausa
+    <main>
+      <section className="wrap dash-head">
+        <div className="stack" style={{ gap: 10 }}>
+          <div className="row" style={{ gap: 8 }}>
+            <StatusChip status={s.awaiting ? 2 : s.roundStatus} regOpen={s.regOpen} drawReady={s.drawReady && !s.awaiting} />
+            {s.isPaused && <span className="chip chip--hot">Token PRIZE en pausa</span>}
           </div>
-        )}
-      </div>
-
-      {/* Tabs — ahora 4 */}
-      <div style={{ display: 'flex', gap: 0, marginBottom: 16, background: '#2D1B4E', borderRadius: 10, padding: 4 }}>
-        <TabBtn label="Mi participación"  active={activeTab === 'participar'} onClick={() => setActiveTab('participar')} />
-        <TabBtn label="Pool en vivo"      active={activeTab === 'pool'}       onClick={() => setActiveTab('pool')} />
-        <TabBtn
-          label={drawActive ? '🔴 Sorteo' : 'Sorteo'}
-          active={activeTab === 'sorteo'}
-          onClick={() => setActiveTab('sorteo')}
-          highlight={drawActive}
-        />
-      </div>
-
-      {/* ── Pestaña: Participar ── */}
-      {activeTab === 'participar' && (
-        <>
-          <PrizeCard amount={prizeUSDT} pool={pool} />
-          {regClosesAt > 0 && (roundStatus === 0 || roundStatus === 1) && (
-            <Countdown regClosesAt={regClosesAt} scheduledAt={scheduledAt} />
+          <h1 className="display dash-title">Ronda Nº {id}</h1>
+          {s.scheduledAt > 0 && (
+            <p className="muted">{id === '1' ? 'Primer sorteo' : 'Sorteo'} el {fmtWhen(s.scheduledAt)}</p>
           )}
-          <TicketCard
-            balance={prizeBalance} ticketSize={ticketSize} tickets={tickets}
-            registeredTickets={registeredTickets} isRegistered={isRegistered}
-            pool={pool} pct={pct}
-          />
-          <RegisterButton
-            canRegister={canRegister} isRegistered={isRegistered} tickets={tickets}
-            registeredTickets={registeredTickets} roundStatus={roundStatus} regOpen={regOpen}
-            isPaused={!!isPaused} prizeBalance={prizeBalance} ticketSize={ticketSize}
-            onSuccess={refetchAll}
-          />
-          <RoundHistory address={address} upcomingId={upcomingId} />
-        </>
-      )}
+        </div>
+        <NextMoment s={s} small />
+      </section>
 
-      {/* ── Pestaña: Pool en vivo ── */}
-      {activeTab === 'pool' && (
-        <PoolLive upcomingId={upcomingId} />
-      )}
-
-      {/* ── Pestaña: Sorteo ── */}
-      {activeTab === 'sorteo' && (
-        <>
-          <DrawSection
-            roundId={upcomingId} scheduledAt={scheduledAt} roundStatus={roundStatus}
-            prizeAmount={prizeAmountRaw || availableReward} onDrawComplete={refetchAll}
-          />
-          <div style={{ background: '#2D1B4E', border: '0.5px solid #4C1D95', borderRadius: 12, padding: 14, marginBottom: 12 }}>
-            <p style={{ fontSize: 12, color: '#9CA3AF', fontWeight: 500, letterSpacing: .5, textTransform: 'uppercase', marginBottom: 10 }}>Estado del pool</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 8 }}>
-              {[
-                { v: pool,    l: 'Boletos totales' },
-                { v: registeredTickets > 0 ? registeredTickets : '—', l: 'Tus boletos', accent: true },
-                { v: pct > 0 ? pct.toFixed(1)+'%' : '—', l: 'Tu probabilidad' },
-              ].map((m,i) => (
-                <div key={i} style={{ background: '#1A0A2E', borderRadius: 8, padding: 10, textAlign: 'center' }}>
-                  <div style={{ fontSize: 18, fontWeight: 500, color: m.accent ? '#A855F7' : '#F3F0FF' }}>{m.v}</div>
-                  <div style={{ fontSize: 11, color: '#6B7280', marginTop: 3 }}>{m.l}</div>
+      <div className="wrap dash">
+        {/* ── Tu boletera ── */}
+        <div className="stack dash__mine">
+          <article className="ticket boletera" aria-label="Tus boletos">
+            <div className="boletera__main">
+              <div className="row between" style={{ alignItems: 'flex-end', gap: 16 }}>
+                <div>
+                  <span className="num boletera__n">{Math.round(count)}</span>
+                  <span className="boletera__l">
+                    {shown === 1 ? 'boleto' : 'boletos'} {showRegistered ? 'en la tómbola' : inPlay ? 'para esta ronda' : 'sin registrar en esta ronda'}
+                  </span>
                 </div>
-              ))}
+                {chance > 0 && (
+                  <div className="boletera__chance">
+                    <span className="num">{fmtPct(chance)}</span>
+                    <span>probabilidad actual</span>
+                  </div>
+                )}
+              </div>
+              <TicketStubs count={shown} gold={showRegistered} stamped={showRegistered} fly={phase === 'fly'}
+                label={`${shown} de 50 boletos posibles`} />
+              <p className="boletera__foot">
+                Tienes {fmtInt(s.balance)} PRIZE en {shortAddr(address)}. Cada boleto vale {fmtInt(roundSize)} PRIZE
+                {shown >= 50 ? ' y ya tienes el máximo.' : '.'}
+              </p>
             </div>
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
+            <div className="boletera__stub" aria-hidden="true">
+              <span>Ronda</span>
+              <span className="ticket__serial">Nº {id}</span>
+              <span>BSC</span>
+            </div>
+          </article>
 
-function TabBtn({ label, active, onClick, highlight }) {
-  return (
-    <button onClick={onClick} style={{
-      flex: 1, padding: '8px 6px', borderRadius: 8, border: 'none',
-      fontSize: 12, fontWeight: active ? 500 : 400, cursor: 'pointer',
-      background: active ? '#1A0A2E' : 'transparent',
-      color: active ? '#F3F0FF' : highlight ? '#F59E0B' : '#9CA3AF',
-    }}>{label}</button>
-  )
-}
+          {lowBalance && (
+            <p className="note note--bad">
+              Tu saldo bajó de {fmtInt(roundSize)} PRIZE. Si sigue así al momento del sorteo, tus boletos no cuentan.
+            </p>
+          )}
 
-function RoundStatusBadge({ status }) {
-  const C = {
-    1: { bg:'#0A1F12', border:'#27500A', color:'#6BCB8B', dot:'#10B981', label:'Registro abierto' },
-    2: { bg:'#2A1800', border:'#854F0B', color:'#FDE68A', dot:'#F59E0B', label:'Sorteo en curso'  },
-    3: { bg:'#0A1F12', border:'#27500A', color:'#6BCB8B', dot:'#10B981', label:'Completada'       },
-    4: { bg:'#1E0A3C', border:'#534AB7', color:'#C4BCFC', dot:'#A855F7', label:'Sin ganador'      },
-    5: { bg:'#1A0A2E', border:'#4C1D95', color:'#9CA3AF', dot:'#6B7280', label:'Saltada'          },
-  }
-  const c = C[status] ?? { bg:'#1A0A2E', border:'#4C1D95', color:'#9CA3AF', dot:'#6B7280', label:'Sin iniciar' }
-  return (
-    <span style={{ display:'inline-flex', alignItems:'center', gap:6, background:c.bg, border:`0.5px solid ${c.border}`, borderRadius:20, padding:'4px 12px', fontSize:12, fontWeight:500, color:c.color }}>
-      <span style={{ width:7, height:7, borderRadius:'50%', background:c.dot, display:'inline-block' }}/>
-      {c.label}
-    </span>
+          <RegisterButton
+            canRegister={canRegister} isRegistered={isRegistered} tickets={s.tickets}
+            registeredTickets={s.myTickets} regOpen={s.regOpen} isPaused={s.isPaused}
+            balance={s.balance} ticketSize={s.ticketSize} roundSize={roundSize} pool={s.pool}
+            onSuccess={onRegistered}
+          />
+
+          <RoundHistory address={address} upcomingId={s.upcomingId} />
+        </div>
+
+        {/* ── La tómbola ── */}
+        <div className="dash__tombola">
+          <section className="panel tombola-panel" aria-label="La tómbola de esta ronda">
+            <Tombola
+              pool={s.awaiting ? s.lastPool : s.pool}
+              mine={s.awaiting ? s.lastMine : showRegistered ? shown : 0}
+              spinning={spinning} />
+            <div className="prize prize--center">
+              <span className="num gold prize__amt">${fmtUsd(prize)}</span>
+              <span className="prize__unit">USDT en juego</span>
+            </div>
+            <DrawSection
+              roundId={s.upcomingId} scheduledAt={s.scheduledAt} roundStatus={s.roundStatus}
+              prizeAmount={(s.roundData && s.roundData[6]) || s.rewardRaw}
+              onDrawComplete={s.refetchAll} onPhase={setDrawPhase}
+            />
+          </section>
+        </div>
+
+        <div className="dash__pool"><PoolLive upcomingId={s.upcomingId} /></div>
+      </div>
+    </main>
   )
 }
