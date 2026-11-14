@@ -6,7 +6,7 @@ import Dashboard from './components/Dashboard'
 import MobileOpenInWallet from './components/MobileOpenInWallet'
 import Tombola from './components/Tombola'
 import TicketCalculator from './components/TicketCalculator'
-import { StatusChip, useCountUp, fmtInt, fmtUsd, fmtWhen } from './components/ui'
+import { StatusChip, Reveal, Tilt, useCountUp, fmtInt, fmtUsd, fmtWhen } from './components/ui'
 import { NextMoment, ConnectCta, RoundTicket, BUY_URL } from './components/Bits'
 import { useSorteo } from './hooks/useSorteo'
 import { CONTRACTS } from './config'
@@ -21,7 +21,7 @@ export default function App() {
   const s = useSorteo(address)
   return (
     <>
-      <Nav reward={s.drawPrize} />
+      <Nav />
       {isConnected ? <Dashboard s={s} address={address} /> : <Landing s={s} />}
       <Faq s={s} />
       <Footer />
@@ -30,21 +30,15 @@ export default function App() {
 }
 
 /* ── Barra superior ─────────────────────────────────────────── */
-function Nav({ reward }) {
+function Nav() {
   return (
     <header className="nav">
-      <div className="wrap nav__in">
+      <div className="wrap wrap--wide nav__in">
         <a className="brand" href="/" aria-label="PRIZECHAIN Sorteo, inicio">
-          <img src="/logo.png" alt="" width="38" height="38" />
+          <img src="/coin-192.png" alt="" width="38" height="38" />
           <span className="brand__word"><b>PRIZE</b>CHAIN</span>
-          <span className="brand__sub">Sorteo semanal</span>
         </a>
-        <div className="nav__right">
-          <span className="live-pill" title="Premio actual, leído del contrato">
-            <span className="dot" />Premio <strong>${fmtUsd(reward)}</strong> USDT
-          </span>
-          <ConnectButton chainStatus="icon" showBalance={false} label="Conectar wallet" />
-        </div>
+        <ConnectButton chainStatus="icon" showBalance={false} accountStatus="address" label="Conectar wallet" />
       </div>
     </header>
   )
@@ -55,31 +49,31 @@ function Landing({ s }) {
   const prize = useCountUp(s.drawPrize, 1200)
   return (
     <main>
-      <section className="wrap hero">
-        <div className="stack hero__copy">
+      <section className="hero">
+        <div className="wrap wrap--wide hero__head">
           <StatusChip status={s.awaiting ? 2 : s.roundStatus} regOpen={s.regOpen} drawReady={s.drawReady && !s.awaiting} />
           <h1 className="display h1">Tus PRIZE ya son boletos</h1>
           <p className="lead">
-            Cada semana una tómbola en BSC sortea un premio en USDT entre los holders registrados.
+            Cada semana una tómbola sortea USDT entre los holders registrados.
             Tus tokens no salen de tu wallet y el ganador lo elige Chainlink.
           </p>
+        </div>
 
+        <Tombola pool={s.awaiting ? s.lastPool : s.pool} spinning={s.awaiting} />
+
+        <div className="wrap hero__foot">
           <div className="prize">
-            <span className="num gold prize__amt">${fmtUsd(prize)}</span>
+            <span className="num prize__amt">${fmtUsd(prize)}</span>
             <span className="prize__unit">USDT en juego</span>
             {s.scheduledAt > 0 && <span className="small muted prize__when">Sorteo el {fmtWhen(s.scheduledAt)}</span>}
           </div>
-
           <NextMoment s={s} />
-
-          <div className="row" style={{ gap: 18 }}>
+          <div className="stack center" style={{ gap: 14 }}>
             <ConnectCta />
             <a className="linkbtn" href="/guia.html">¿Primera vez? Guía paso a paso</a>
           </div>
           <MobileOpenInWallet />
         </div>
-
-        <Tombola pool={s.awaiting ? s.lastPool : s.pool} spinning={s.awaiting} />
       </section>
 
       <section className="section">
@@ -92,13 +86,13 @@ function Landing({ s }) {
 
       {VIDEO_URL && (
         <section className="section">
-          <div className="wrap stack" style={{ gap: 24 }}>
-            <h2 className="h2">Mira cómo participar</h2>
+          <Reveal className="wrap">
+            <div className="section__head"><h2 className="h2">Mira cómo participar</h2></div>
             <div className="video">
               <iframe src={VIDEO_URL} title="Tutorial del sorteo PRIZECHAIN" loading="lazy"
                 allow="accelerometer; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
             </div>
-          </div>
+          </Reveal>
         </section>
       )}
 
@@ -112,24 +106,24 @@ function Steps({ s }) {
   const size = s.ticketSize > 0 ? fmtInt(s.ticketSize) : '760'
   const steps = [
     { t: 'Consigue PRIZE', d: <>Cómpralo en PancakeSwap con BNB. Con {size} PRIZE ya tienes un boleto. <a href={BUY_URL} target="_blank" rel="noreferrer">Comprar PRIZE</a></> },
-    { t: 'Conecta tu wallet', d: 'MetaMask, Trust Wallet u otra compatible con BSC. En el celular, abre esta web desde el navegador de tu wallet.' },
-    { t: 'Regístrate', d: 'Un toque en «Registrarme» antes de que cierre el registro, un día antes del sorteo. Solo pagas el gas: centavos de dólar.' },
-    { t: 'Mantén tus PRIZE', d: 'Chainlink elige un boleto al azar y el USDT llega solo a la wallet ganadora. No hay nada que reclamar.' },
+    { t: 'Conecta tu wallet', d: 'MetaMask, Trust Wallet u otra de BSC. En el celular, abre esta web dentro de tu wallet.' },
+    { t: 'Regístrate', d: 'Un toque en «Registrarme» hasta un día antes del sorteo. Solo pagas el gas: centavos de dólar.' },
+    { t: 'Mantén tus PRIZE', d: 'Chainlink elige un boleto al azar y el USDT llega solo a la wallet ganadora.' },
   ]
   return (
     <section className="section">
-      <div className="wrap stack" style={{ gap: 32 }}>
-        <div className="row between" style={{ alignItems: 'end' }}>
+      <div className="wrap">
+        <div className="section__head">
           <h2 className="h2">Cómo participar</h2>
           <a className="linkbtn" href="/guia.html">Guía con capturas para principiantes</a>
         </div>
         <ol className="steps">
           {steps.map((st, i) => (
-            <li key={st.t} className="step">
+            <Reveal as="li" key={st.t} className="step" style={{ transitionDelay: `${i * 90}ms` }}>
               <span className="step__n" aria-hidden="true">{i + 1}</span>
               <h3 className="h3">{st.t}</h3>
               <p className="muted small">{st.d}</p>
-            </li>
+            </Reveal>
           ))}
         </ol>
       </div>
@@ -143,8 +137,8 @@ function Winners({ s }) {
   const ids = id > 1 ? Array.from({ length: Math.min(3, id - 1) }, (_, i) => BigInt(id - 1 - i)) : []
   return (
     <section className="section">
-      <div className="wrap stack" style={{ gap: 28 }}>
-        <h2 className="h2">Ganadores</h2>
+      <Reveal className="wrap">
+        <div className="section__head"><h2 className="h2">Ganadores</h2></div>
         {ids.length === 0 ? (
           <div className="empty">
             <p className="h3">Todavía no hay ganadores.</p>
@@ -154,9 +148,9 @@ function Winners({ s }) {
             </p>
           </div>
         ) : (
-          <div className="winners">{ids.map(r => <RoundTicket key={r.toString()} roundId={r} />)}</div>
+          <div className="winners">{ids.map(r => <Tilt key={r.toString()} max={5}><RoundTicket roundId={r} /></Tilt>)}</div>
         )}
-      </div>
+      </Reveal>
     </section>
   )
 }
@@ -192,10 +186,10 @@ function Faq({ s }) {
   const items = faqs(lang, s.ticketSize, s.regClosesAt)
   return (
     <section className="section">
-      <div className="wrap faq-wrap">
-        <div className="stack" style={{ gap: 18 }}>
+      <div className="wrap">
+        <div className="section__head">
           <h2 className="h2">{lang === 'es' ? 'Preguntas frecuentes' : 'Questions'}</h2>
-          <div className="seg" role="tablist" aria-label="Idioma" style={{ maxWidth: 240 }}>
+          <div className="seg" role="tablist" aria-label="Idioma" style={{ width: 240 }}>
             {[['es', 'Español'], ['en', 'English']].map(([k, l]) => (
               <button key={k} role="tab" aria-selected={lang === k} onClick={() => { setLang(k); setOpen(0) }}>{l}</button>
             ))}
@@ -221,12 +215,12 @@ function Faq({ s }) {
 function Footer() {
   return (
     <footer className="footer">
-      <div className="wrap row between">
-        <span className="row" style={{ gap: 10 }}>
-          <img src="/logo.png" alt="" width="24" height="24" style={{ borderRadius: '50%' }} />
+      <div className="wrap">
+        <span className="row" style={{ gap: 10, justifyContent: 'center' }}>
+          <img src="/coin-192.png" alt="" width="26" height="26" />
           <span className="small muted">PRIZECHAIN Sorteo en BNB Smart Chain</span>
         </span>
-        <nav className="row small" style={{ gap: 22 }} aria-label="Enlaces">
+        <nav className="row small" style={{ gap: '8px 22px', justifyContent: 'center' }} aria-label="Enlaces">
           <a href="/guia.html">Guía paso a paso</a>
           <a href={`https://bscscan.com/address/${CONTRACTS.SORTEO}#code`} target="_blank" rel="noreferrer">Contrato verificado en BscScan</a>
           <a href="https://vrf.chain.link" target="_blank" rel="noreferrer">Chainlink VRF</a>

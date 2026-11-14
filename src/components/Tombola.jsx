@@ -1,12 +1,61 @@
 // src/components/Tombola.jsx
 //
-// La tómbola: un tambor de alambre octogonal con los boletos del pool adentro.
-// Cada papelito es un boleto registrado (se dibujan hasta 160; la cifra real va
-// en el texto). Los boletos de la wallet conectada salen en dorado.
-// En reposo el tambor gira lento y los boletos descansan abajo; mientras
-// Chainlink sortea (spinning) el tambor gira rápido y los boletos dan vueltas.
+// La tómbola. Si el equipo soporta 3D se muestra la versión three.js
+// (Tombola3D, cargada aparte); si no, o mientras carga, la versión dibujada.
+// Cada papelito es un boleto registrado (hasta 160; la cifra real va en el texto)
+// y los boletos de la wallet conectada salen en dorado.
 
-import { useMemo } from 'react'
+import { Component, Suspense, lazy, useMemo, useState } from 'react'
+
+const Tombola3D = lazy(() => import('./Tombola3D'))
+
+let webglOk
+function canWebGL() {
+  if (webglOk !== undefined) return webglOk
+  try {
+    const c = document.createElement('canvas')
+    webglOk = !!(window.WebGLRenderingContext && (c.getContext('webgl2') || c.getContext('webgl')))
+  } catch { webglOk = false }
+  return webglOk
+}
+
+class Guard extends Component {
+  state = { failed: false }
+  static getDerivedStateFromError() { return { failed: true } }
+  componentDidCatch() { this.props.onFail?.() }
+  render() { return this.state.failed ? null : this.props.children }
+}
+
+export default function Tombola({ pool = 0, mine = 0, spinning = false, caption = true, hint = true }) {
+  const [use3d, setUse3d] = useState(() => typeof window !== 'undefined' && canWebGL())
+  const drawn = Math.min(pool, MAX_DRAWN)
+  const mineDrawn = pool > 0 ? Math.min(drawn, Math.max(mine > 0 ? 1 : 0, Math.round(drawn * mine / pool))) : 0
+  const label = pool > 0 ? `Tómbola con ${pool} boletos` : 'Tómbola vacía'
+  const flat = <TombolaSvg pool={pool} mine={mine} spinning={spinning} />
+  const fail = () => { webglOk = false; setUse3d(false) }
+
+  return (
+    <figure className="stage">
+      {use3d ? (
+        <Guard onFail={fail}>
+          <Suspense fallback={<div className="stage__flat">{flat}</div>}>
+            <Tombola3D drawn={drawn} mine={mineDrawn} spinning={spinning} label={label} onFail={fail} />
+          </Suspense>
+        </Guard>
+      ) : <div className="stage__flat">{flat}</div>}
+      {caption && (
+        <figcaption className="stage__cap">
+          <span><span className="num">{pool.toLocaleString('es-CL')}</span> {pool === 1 ? 'boleto adentro' : 'boletos adentro'}</span>
+          {mine > 0 && <span><span className="num gold">{mine}</span> {mine === 1 ? 'es tuyo' : 'son tuyos'}</span>}
+          {use3d && hint && <span className="stage__hint">Gírala con el dedo o el mouse</span>}
+        </figcaption>
+      )}
+    </figure>
+  )
+}
+
+/* ── Versión dibujada (respaldo) ────────────────────────────── */
+
 
 const CX = 200, CY = 190, R = 132, INNER = 112, MAX_DRAWN = 160
 
@@ -15,7 +64,7 @@ function rng(seed) {           // pseudoaleatorio determinista: el dibujo no sal
   return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296)
 }
 
-export default function Tombola({ pool = 0, mine = 0, spinning = false, caption = true }) {
+function TombolaSvg({ pool = 0, mine = 0, spinning = false }) {
   const drawn = Math.min(pool, MAX_DRAWN)
   const mineDrawn = pool > 0 ? Math.min(drawn, Math.max(mine > 0 ? 1 : 0, Math.round(drawn * mine / pool))) : 0
 
@@ -101,12 +150,6 @@ export default function Tombola({ pool = 0, mine = 0, spinning = false, caption 
             style={{ font: '800 26px var(--f-display)', letterSpacing: '.04em' }}>vacía</text>
         )}
       </svg>
-      {caption && (
-        <figcaption className="row" style={{ justifyContent: 'center', gap: 18, marginTop: 6 }}>
-          <span><span className="num" style={{ fontSize: 34 }}>{pool.toLocaleString('es-CL')}</span> <span className="muted small">boletos adentro</span></span>
-          {mine > 0 && <span><span className="num gold" style={{ fontSize: 34 }}>{mine}</span> <span className="muted small">son tuyos</span></span>}
-        </figcaption>
-      )}
     </figure>
   )
 }

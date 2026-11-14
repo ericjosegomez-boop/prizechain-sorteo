@@ -2,7 +2,7 @@
 // Panel con la wallet conectada: tu boletera (izquierda) y la tómbola (derecha).
 // Las lecturas del contrato vienen de useSorteo (App las pasa como `s`).
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import Tombola        from './Tombola'
 import TicketStubs    from './TicketStubs'
 import RegisterButton from './RegisterButton'
@@ -10,7 +10,7 @@ import DrawSection    from './DrawSection'
 import PoolLive       from './PoolLive'
 import RoundHistory   from './RoundHistory'
 import { NextMoment } from './Bits'
-import { StatusChip, useCountUp, fmtInt, fmtUsd, fmtWhen, shortAddr, celebrate } from './ui'
+import { StatusChip, Tilt, useCountUp, fmtInt, fmtUsd, fmtWhen, shortAddr, celebrate } from './ui'
 import { formatUnits } from 'viem'
 
 const fmtPct = p => (p >= 99.95 ? '100' : p.toLocaleString('es-CL', { maximumFractionDigits: 1 })) + '%'
@@ -35,10 +35,16 @@ export default function Dashboard({ s, address }) {
   const spinning       = s.awaiting || drawPhase === 'sending' || drawPhase === 'awaiting' || burst
   const id             = s.upcomingId ? s.upcomingId.toString() : '—'
 
+  const tombolaRef = useRef(null)
+  // A la hora del sorteo la tómbola pasa arriba; antes, primero va tu boletera.
+  const drawFirst = s.drawReady || s.awaiting || ['sending', 'awaiting', 'winner', 'no_winner'].includes(drawPhase)
+
   function onRegistered() {
     setPhase('fly'); setBurst(true); celebrate()
     setTimeout(() => { setPhase('done'); s.refetchAll() }, 750)
-    setTimeout(() => setBurst(false), 2600)
+    // baja hasta la tómbola para ver caer tus boletos dorados
+    setTimeout(() => tombolaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 1100)
+    setTimeout(() => setBurst(false), 4200)
   }
 
   if (s.loading) {
@@ -53,53 +59,52 @@ export default function Dashboard({ s, address }) {
   }
 
   return (
-    <main>
-      <section className="wrap dash-head">
-        <div className="stack" style={{ gap: 10 }}>
-          <div className="row" style={{ gap: 8 }}>
-            <StatusChip status={s.awaiting ? 2 : s.roundStatus} regOpen={s.regOpen} drawReady={s.drawReady && !s.awaiting} />
-            {s.isPaused && <span className="chip chip--hot">Token PRIZE en pausa</span>}
-          </div>
-          <h1 className="display dash-title">Ronda Nº {id}</h1>
-          {s.scheduledAt > 0 && (
-            <p className="muted">{id === '1' ? 'Primer sorteo' : 'Sorteo'} el {fmtWhen(s.scheduledAt)}</p>
-          )}
+    <main className="wrap dash">
+      <header className="dash-head">
+        <div className="row" style={{ gap: 8, justifyContent: 'center' }}>
+          <StatusChip status={s.awaiting ? 2 : s.roundStatus} regOpen={s.regOpen} drawReady={s.drawReady && !s.awaiting} />
+          {s.isPaused && <span className="chip chip--hot">Token PRIZE en pausa</span>}
         </div>
+        <h1 className="display dash-title">Ronda Nº {id}</h1>
+        {s.scheduledAt > 0 && (
+          <p className="muted">{id === '1' ? 'Primer sorteo' : 'Sorteo'} el {fmtWhen(s.scheduledAt)}</p>
+        )}
         <NextMoment s={s} small />
-      </section>
+      </header>
 
-      <div className="wrap dash">
+      <div className={'dash__body' + (drawFirst ? ' draw-first' : '')}>
         {/* ── Tu boletera ── */}
-        <div className="stack dash__mine">
-          <article className="ticket boletera" aria-label="Tus boletos">
-            <div className="boletera__main">
-              <div className="row between" style={{ alignItems: 'flex-end', gap: 16 }}>
-                <div>
-                  <span className="num boletera__n">{Math.round(count)}</span>
-                  <span className="boletera__l">
-                    {shown === 1 ? 'boleto' : 'boletos'} {showRegistered ? 'en la tómbola' : inPlay ? 'para esta ronda' : 'sin registrar en esta ronda'}
-                  </span>
-                </div>
-                {chance > 0 && (
-                  <div className="boletera__chance">
-                    <span className="num">{fmtPct(chance)}</span>
-                    <span>probabilidad actual</span>
-                  </div>
-                )}
+        <div className="stack">
+          <Tilt>
+            <article className="ticket boletera" aria-label="Tus boletos">
+              <div className="boletera__stub" aria-hidden="true">
+                <span>Tu boletera</span>
+                <span className="ticket__serial">Ronda Nº {id}</span>
               </div>
-              <TicketStubs count={shown} gold={showRegistered} stamped={showRegistered} fly={phase === 'fly'}
-                label={`${shown} de 50 boletos posibles`} />
-              <p className="boletera__foot">
-                Tienes {fmtInt(s.balance)} PRIZE en {shortAddr(address)}. Cada boleto vale {fmtInt(roundSize)} PRIZE
-                {shown >= 50 ? ' y ya tienes el máximo.' : '.'}
-              </p>
-            </div>
-            <div className="boletera__stub" aria-hidden="true">
-              <span>Ronda</span>
-              <span className="ticket__serial">Nº {id}</span>
-              <span>BSC</span>
-            </div>
-          </article>
+              <div className="boletera__main">
+                <div className="row between" style={{ alignItems: 'flex-end', gap: 16 }}>
+                  <div>
+                    <span className="num boletera__n">{Math.round(count)}</span>
+                    <span className="boletera__l">
+                      {shown === 1 ? 'boleto' : 'boletos'} {showRegistered ? 'en la tómbola' : inPlay ? 'para esta ronda' : 'sin registrar en esta ronda'}
+                    </span>
+                  </div>
+                  {chance > 0 && (
+                    <div className="boletera__chance">
+                      <span className="num">{fmtPct(chance)}</span>
+                      <span>probabilidad actual</span>
+                    </div>
+                  )}
+                </div>
+                <TicketStubs count={shown} gold={showRegistered} stamped={showRegistered} fly={phase === 'fly'}
+                  label={`${shown} de 50 boletos posibles`} />
+                <p className="boletera__foot">
+                  Tienes {fmtInt(s.balance)} PRIZE en {shortAddr(address)}. Cada boleto vale {fmtInt(roundSize)} PRIZE
+                  {shown >= 50 ? ' y ya tienes el máximo.' : '.'}
+                </p>
+              </div>
+            </article>
+          </Tilt>
 
           {lowBalance && (
             <p className="note note--bad">
@@ -118,25 +123,23 @@ export default function Dashboard({ s, address }) {
         </div>
 
         {/* ── La tómbola ── */}
-        <div className="dash__tombola">
-          <section className="panel tombola-panel" aria-label="La tómbola de esta ronda">
-            <Tombola
-              pool={s.awaiting ? s.lastPool : s.pool}
-              mine={s.awaiting ? s.lastMine : showRegistered ? shown : 0}
-              spinning={spinning} />
-            <div className="prize prize--center">
-              <span className="num gold prize__amt">${fmtUsd(prize)}</span>
-              <span className="prize__unit">USDT en juego</span>
-            </div>
-            <DrawSection
-              roundId={s.upcomingId} scheduledAt={s.scheduledAt} roundStatus={s.roundStatus}
-              prizeAmount={(s.roundData && s.roundData[6]) || s.rewardRaw}
-              onDrawComplete={s.refetchAll} onPhase={setDrawPhase}
-            />
-          </section>
-        </div>
+        <section className="panel tombola-panel" aria-label="La tómbola de esta ronda" ref={tombolaRef}>
+          <Tombola
+            pool={s.awaiting ? s.lastPool : s.pool}
+            mine={s.awaiting ? s.lastMine : showRegistered ? shown : 0}
+            spinning={spinning} />
+          <div className="prize prize--sm">
+            <span className="num prize__amt">${fmtUsd(prize)}</span>
+            <span className="prize__unit">USDT en juego</span>
+          </div>
+          <DrawSection
+            roundId={s.upcomingId} scheduledAt={s.scheduledAt} roundStatus={s.roundStatus}
+            prizeAmount={(s.roundData && s.roundData[6]) || s.rewardRaw}
+            onDrawComplete={s.refetchAll} onPhase={setDrawPhase}
+          />
+        </section>
 
-        <div className="dash__pool"><PoolLive upcomingId={s.upcomingId} /></div>
+        <PoolLive upcomingId={s.upcomingId} />
       </div>
     </main>
   )

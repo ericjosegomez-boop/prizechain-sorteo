@@ -21,7 +21,7 @@ export function useCountUp(value, ms = 900) {
     const start = performance.now(), a = from.current, b = value
     let raf
     const step = t => {
-      const k = Math.min(1, (t - start) / ms)
+      const k = Math.max(0, Math.min(1, (t - start) / ms))
       const e = 1 - Math.pow(1 - k, 3)
       setShown(a + (b - a) * e)
       if (k < 1) raf = requestAnimationFrame(step); else from.current = b
@@ -45,7 +45,27 @@ export function fmtWhen(ts) {
   return `${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]}, ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-/** Cuenta regresiva en bloques: días · horas · min · seg. */
+/** Una tarjeta del contador: al cambiar el número, la mitad de arriba cae como en un reloj de aeropuerto. */
+function Flip({ value }) {
+  const [prev, setPrev] = useState(value)
+  const [flipping, setFlipping] = useState(false)
+  useEffect(() => {
+    if (value === prev) return
+    setFlipping(true)
+    const t = setTimeout(() => { setPrev(value); setFlipping(false) }, 560)
+    return () => clearTimeout(t)
+  }, [value])
+  return (
+    <span className={'flip' + (flipping ? ' is-flipping' : '')} aria-hidden="true">
+      <span className="flip__half flip__top">{value}</span>
+      <span className="flip__half flip__bottom">{prev}</span>
+      <span className="flip__half flip__top flip__top--move">{prev}</span>
+      <span className="flip__half flip__bottom flip__bottom--move">{value}</span>
+    </span>
+  )
+}
+
+/** Cuenta regresiva con tarjetas que se voltean: días, horas, min, seg. */
 export function Countdown({ to, small = false, label }) {
   const now = useNow(1000)
   const left = Math.max(0, (to || 0) - now)
@@ -53,20 +73,51 @@ export function Countdown({ to, small = false, label }) {
   const m = Math.floor((left % 3600) / 60), s = left % 60
   const parts = [[d, 'días'], [h, 'horas'], [m, 'min'], [s, 'seg']]
   return (
-    <div aria-label={label} role="timer">
-      <div className={'count' + (small ? ' count--sm' : '')}>
-        {parts.map(([n, l], i) => (
-          <span key={l} style={{ display: 'contents' }}>
-            {i > 0 && <span className="count__sep" aria-hidden="true">:</span>}
-            <span className="count__u">
-              <span className="count__n">{String(n).padStart(2, '0')}</span>
-              <span className="count__l">{l}</span>
-            </span>
-          </span>
-        ))}
-      </div>
+    <div role="timer" aria-label={`${label ?? 'Faltan'}: ${d} días, ${h} horas y ${m} minutos`}
+      className={'count' + (small ? ' count--sm' : '')}>
+      {parts.map(([n, l]) => (
+        <span className="count__u" key={l}>
+          <Flip value={String(n).padStart(2, '0')} />
+          <span className="count__l" aria-hidden="true">{l}</span>
+        </span>
+      ))}
     </div>
   )
+}
+
+/** Inclina su contenido en 3D siguiendo el dedo o el mouse; en reposo se mece solo. */
+export function Tilt({ children, max = 7 }) {
+  const ref = useRef(null)
+  const move = e => {
+    const el = ref.current; if (!el) return
+    const r = el.getBoundingClientRect()
+    const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5
+    el.style.setProperty('--ry', (px * max * 2).toFixed(2) + 'deg')
+    el.style.setProperty('--rx', (-py * max * 2).toFixed(2) + 'deg')
+    el.style.setProperty('--gx', (px * 120 + 50).toFixed(1) + '%')
+    el.classList.add('is-live')
+  }
+  const leave = () => { ref.current?.classList.remove('is-live') }
+  return (
+    <div ref={ref} className="tilt" onPointerMove={move} onPointerLeave={leave} onPointerCancel={leave}
+      onPointerUp={e => { if (e.pointerType !== 'mouse') leave() }}>
+      {children}
+    </div>
+  )
+}
+
+/** Hace entrar su contenido la primera vez que aparece en pantalla. */
+export function Reveal({ children, as: Tag = 'div', className = '', ...rest }) {
+  const ref = useRef(null)
+  const [seen, setSeen] = useState(false)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || !('IntersectionObserver' in window)) { setSeen(true); return }
+    const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { setSeen(true); io.disconnect() } }, { threshold: 0.15 })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
+  return <Tag ref={ref} className={`reveal ${seen ? 'is-in' : ''} ${className}`} {...rest}>{children}</Tag>
 }
 
 /** Estado de la ronda como chip. */

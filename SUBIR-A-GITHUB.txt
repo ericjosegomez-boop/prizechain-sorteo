@@ -1,7 +1,7 @@
-PRIZECHAIN Sorteo: diseño nuevo de la web
-==========================================
+PRIZECHAIN Sorteo: diseño 3D, igual en celular y PC
+====================================================
 
-Qué cambia: solo el diseño de la página. El contrato es el mismo v4
+Qué cambia: solo el diseño de la página (tómbola 3D, monedas, contador y boletos con relieve). El contrato es el mismo v4
 (0x9c2e3196B3e84B9d051391D6D392F29FD138ae5C) y la web lo usa igual que antes.
 
 Cómo subirlo (5 minutos)
@@ -15,6 +15,7 @@ Cómo subirlo (5 minutos)
    Arrastra las carpetas completas: GitHub reemplaza los archivos que ya existen.
 5. Abajo, en "Commit changes", escribe: Diseño nuevo de la web
    y toca el botón verde "Commit changes".
+   (Esta versión trae dos imágenes nuevas en public: coin.jpg y coin-192.png. Súbelas también.)
 6. Vercel publica solo. En 1 a 2 minutos el despliegue debe decir "Ready".
    Abre la web y recarga (en el celular, cierra y vuelve a abrir la pestaña).
 

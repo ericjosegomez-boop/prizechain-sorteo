@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import TicketStubs from './TicketStubs'
-import { fmtInt } from './ui'
+import { fmtInt, Reveal, Tilt } from './ui'
 
 export default function TicketCalculator({ ticketSize = 0, pool = 0 }) {
   const size = ticketSize > 0 ? ticketSize : 760
@@ -17,11 +17,14 @@ export default function TicketCalculator({ ticketSize = 0, pool = 0 }) {
 
   return (
     <div className="calc">
-      <div className="stack" style={{ gap: 14 }}>
+      <div className="section__head" style={{ marginBottom: 0 }}>
         <h2 className="h2">¿Cuántos boletos te tocan?</h2>
-        <p className="muted">Cada <strong style={{ color: 'var(--text)' }}>{fmtInt(size)} PRIZE</strong> en tu wallet
-          es un boleto, hasta 50. El precio se ajusta solo al supply en circulación.</p>
-        <label htmlFor="calc-prize" className="small muted" style={{ marginTop: 6 }}>Tus PRIZE</label>
+        <p className="muted" style={{ maxWidth: '46ch' }}>Cada <strong style={{ color: 'var(--text)' }}>{fmtInt(size)} PRIZE</strong> en
+          tu wallet es un boleto, hasta 50. Mueve la barra y mira.</p>
+      </div>
+
+      <Reveal className="panel stack" style={{ gap: 14 }}>
+        <label htmlFor="calc-prize" className="small muted">Tus PRIZE</label>
         <input id="calc-prize" className="input-num" inputMode="numeric" value={fmtInt(prize)}
           onChange={e => {
             const v = Number(e.target.value.replace(/\D/g, '')) || 0
@@ -30,27 +33,31 @@ export default function TicketCalculator({ ticketSize = 0, pool = 0 }) {
         <input type="range" className="range" min="0" max={maxPrize} step={Math.max(1, Math.round(size / 4))}
           value={Math.min(prize, maxPrize)} style={{ '--p': pct + '%' }}
           onChange={e => setPrize(Number(e.target.value))} aria-label="Tus PRIZE" />
-      </div>
+      </Reveal>
 
-      <div className="ticket ticket--split">
-        <div className="ticket__main">
-          <div>
-            <span className="num" style={{ fontSize: 72, color: 'var(--paper-ink)', display: 'block' }}>{tickets}</span>
-            <span style={{ fontSize: 15, fontWeight: 600 }}>{tickets === 1 ? 'boleto' : 'boletos'} en tu boletera</span>
+      <Tilt>
+        <div className="ticket ticket--split">
+          <div className="ticket__main">
+            <div className="row between" style={{ alignItems: 'flex-end' }}>
+              <div>
+                <span className="num boletera__n">{tickets}</span>
+                <span className="boletera__l">{tickets === 1 ? 'boleto' : 'boletos'} en tu boletera</span>
+              </div>
+            </div>
+            <TicketStubs count={tickets} label={`${tickets} boletos con ${fmtInt(prize)} PRIZE`} />
+            {tickets === 0 && prize > 0 && (
+              <p style={{ fontSize: 14 }}>Te faltan {fmtInt(size - prize)} PRIZE para el primer boleto.</p>
+            )}
+            {prize >= maxPrize && (
+              <p style={{ fontSize: 14 }}>Llegaste al máximo: más PRIZE no suma boletos.</p>
+            )}
           </div>
-          <TicketStubs count={tickets} label={`${tickets} boletos con ${fmtInt(prize)} PRIZE`} />
-          {tickets === 0 && prize > 0 && (
-            <p style={{ fontSize: 14 }}>Te faltan {fmtInt(size - prize)} PRIZE para el primer boleto.</p>
-          )}
-          {prize >= maxPrize && (
-            <p style={{ fontSize: 14 }}>Llegaste al máximo: más PRIZE no suma boletos.</p>
-          )}
+          <div className="ticket__stub">
+            <span className="num">{tickets > 0 ? (chance >= 99.95 ? '100' : chance.toLocaleString('es-CL', { maximumFractionDigits: 1 })) + '%' : '—'}</span>
+            <span>{pool > 0 ? `de ganar con los ${fmtInt(pool)} boletos que ya hay` : 'si nadie más se registra'}</span>
+          </div>
         </div>
-        <div className="ticket__stub">
-          <span className="num">{tickets > 0 ? (chance >= 99.95 ? '100' : chance.toLocaleString('es-CL', { maximumFractionDigits: 1 })) + '%' : '—'}</span>
-          <span>{pool > 0 ? `de ganar con los ${fmtInt(pool)} boletos que ya hay` : 'si nadie más se registra'}</span>
-        </div>
-      </div>
+      </Tilt>
     </div>
   )
 }
