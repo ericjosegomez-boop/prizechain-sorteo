@@ -141,7 +141,7 @@ body::before { /* luces de feria al fondo */
 /* ── Entrada de secciones e inclinación 3D ────────────────── */
 .reveal { opacity: 0; transform: perspective(900px) rotateX(16deg) translateY(30px); transform-origin: 50% 100%; transition: opacity .6s ease, transform .75s cubic-bezier(.2,.8,.2,1); }
 .reveal.is-in { opacity: 1; transform: none; }
-.tilt { perspective: 1000px; }
+.tilt { perspective: 1000px; width: 100%; max-width: 520px; margin-inline: auto; }
 .tilt > * { transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transition: transform .5s cubic-bezier(.2,.8,.2,1); animation: tiltIdle 9s ease-in-out infinite; will-change: transform; }
 .tilt.is-live > * { animation: none; transition: transform .09s linear; }
 @keyframes tiltIdle { 0%, 100% { transform: rotateX(3.5deg) rotateY(-4.5deg) } 50% { transform: rotateX(-2.5deg) rotateY(4.5deg) } }
@@ -162,22 +162,22 @@ body::before { /* luces de feria al fondo */
   background-size: 240% 100%; background-position: var(--gx, 140%) 0; mix-blend-mode: soft-light; transition: background-position .35s ease;
 }
 .ticket__serial { font-family: var(--f-display); font-weight: 800; color: var(--stamp); letter-spacing: .08em; }
-.ticket__main, .boletera__main { padding: 18px 24px 22px; display: flex; flex-direction: column; gap: 14px; }
-.ticket__stub, .boletera__stub { display: flex; align-items: baseline; gap: 10px; padding: 14px 24px; font-size: 13.5px; font-weight: 500; }
+.ticket__main, .boletera__main { padding: 14px 22px 18px; display: flex; flex-direction: column; gap: 11px; }
+.ticket__stub, .boletera__stub { display: flex; align-items: baseline; gap: 10px; padding: 11px 22px; font-size: 13px; font-weight: 500; }
 .boletera__stub { border-bottom: 2px dashed rgba(30,38,71,.24); justify-content: space-between; }
-.boletera__stub .ticket__serial { font-size: 30px; line-height: 1; }
-.ticket__stub { border-top: 2px dashed rgba(30,38,71,.24); padding-bottom: 18px; }
-.ticket__stub .num { font-size: 40px; color: var(--stamp); }
-.boletera__n { font-size: clamp(72px, 19vw, 96px); display: block; color: var(--paper-ink); text-shadow: 0 2px 0 rgba(30,38,71,.25); }
+.boletera__stub .ticket__serial { font-size: 25px; line-height: 1; }
+.ticket__stub { border-top: 2px dashed rgba(30,38,71,.24); padding-bottom: 14px; }
+.ticket__stub .num { font-size: 34px; color: var(--stamp); }
+.boletera__n { font-size: clamp(54px, 14vw, 68px); display: block; color: var(--paper-ink); text-shadow: 0 2px 0 rgba(30,38,71,.25); }
 .boletera__l { font-size: 15px; font-weight: 600; }
 .boletera__chance { text-align: right; display: flex; flex-direction: column; }
-.boletera__chance .num { font-size: 40px; color: var(--stamp); }
+.boletera__chance .num { font-size: 32px; color: var(--stamp); }
 .boletera__chance span:last-child { font-size: 13px; }
 .boletera__foot { font-size: 14px; color: #4A5272; }
 .ticket--round { padding: 20px 30px; min-height: 132px; justify-content: center; }
 
 /* ── Boletera: grilla de talones ──────────────────────────── */
-.stubs { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: clamp(4px, 1.1vw, 6px); }
+.stubs { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: clamp(3px, .9vw, 5px); }
 .stub {
   position: relative; aspect-ratio: 1.55 / 1; border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
@@ -287,7 +287,7 @@ body::before { /* luces de feria al fondo */
 .faq__a[data-open="true"] > div { padding-bottom: 20px; }
 
 /* ── Portada ──────────────────────────────────────────────── */
-.hero { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding-block: clamp(22px, 5vw, 40px) clamp(48px, 8vw, 72px); }
+.hero { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; padding-block: clamp(64px, 9vw, 84px) clamp(48px, 8vw, 72px); }
 .hero__head { display: flex; flex-direction: column; align-items: center; gap: 18px; }
 .hero__foot { display: flex; flex-direction: column; align-items: center; gap: 24px; margin-top: 8px; }
 .prize { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 12px; text-align: center; }
@@ -300,6 +300,7 @@ body::before { /* luces de feria al fondo */
 .prize--sm .prize__amt { font-size: clamp(56px, 15vw, 76px); }
 
 .calc { display: flex; flex-direction: column; gap: 22px; }
+.calc > .panel, .mine > * { width: 100%; max-width: 520px; margin-inline: auto; }
 .steps { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; perspective: 900px; }
 .step { list-style: none; padding: clamp(14px, 4vw, 22px); border-radius: var(--r-md); background: linear-gradient(180deg, rgba(27,43,92,.82), rgba(17,29,66,.92)); border: 1px solid var(--line); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 14px 26px rgba(0,0,0,.28); display: flex; flex-direction: column; gap: 6px; transition: transform .3s cubic-bezier(.2,.8,.2,1), border-color .3s ease, opacity .6s ease; }
 .step.is-in:hover { transform: translateY(-6px) rotateX(6deg); border-color: rgba(232,179,65,.5); }
@@ -313,7 +314,7 @@ body::before { /* luces de feria al fondo */
 .footer .wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; }
 
 /* ── Panel conectado ──────────────────────────────────────── */
-.dash { display: flex; flex-direction: column; gap: 24px; padding-block: clamp(22px, 5vw, 36px) 64px; }
+.dash { display: flex; flex-direction: column; gap: 24px; padding-block: clamp(64px, 9vw, 84px) 64px; }
 .dash-head { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; }
 .dash-title { font-size: clamp(56px, 15vw, 96px); text-shadow: 0 3px 0 #5d73c4, 0 6px 0 #2f448f, 0 16px 26px rgba(0,0,0,.45); }
 .dash__body { display: flex; flex-direction: column; gap: 24px; }
@@ -348,3 +349,36 @@ body::before { /* luces de feria al fondo */
 .fund__cur { left: 14px; font-size: 30px; color: var(--gold); }
 .fund__unit { right: 14px; font-size: 20px; color: var(--muted); }
 .fund .seg button[aria-selected="true"] { background: var(--gold); color: #1A1405; font-weight: 700; }
+
+/* ── Fondo de feria: focos, luces y boletos flotando ──────── */
+.backdrop { position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.backdrop::after { /* sombra en los bordes para dar profundidad */
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, transparent 45%, rgba(4,8,22,.6) 100%);
+}
+.backdrop__beam { position: absolute; top: -12vh; width: 90vmax; height: 150vh; transform-origin: 50% 0; filter: blur(14px); animation: sweep 13s ease-in-out infinite alternate; }
+.backdrop__beam--l { left: -45vmax; margin-left: 12vw; --a: -34deg; --b: -8deg;
+  background: conic-gradient(from 180deg at 50% 0, rgba(232,179,65,.2) 0deg, transparent 9deg, transparent 351deg, rgba(232,179,65,.2) 360deg); }
+.backdrop__beam--r { right: -45vmax; margin-right: 12vw; --a: 34deg; --b: 10deg; animation-duration: 17s;
+  background: conic-gradient(from 180deg at 50% 0, rgba(61,214,245,.16) 0deg, transparent 8deg, transparent 352deg, rgba(61,214,245,.16) 360deg); }
+@keyframes sweep { from { transform: rotate(var(--a)) } to { transform: rotate(var(--b)) } }
+.backdrop__glow { position: absolute; border-radius: 50%; translate: -50% -50%; animation: drift ease-in-out infinite alternate; will-change: transform; }
+@keyframes drift { from { transform: translate3d(0, 0, 0) } to { transform: translate3d(var(--dx), var(--dy), 0) } }
+.floater { position: absolute; top: 0; perspective: 500px; animation: rise linear infinite; will-change: transform; }
+@keyframes rise { from { transform: translate3d(0, 108vh, 0) scale(var(--s, 1)) } to { transform: translate3d(0, -22vh, 0) scale(var(--s, 1)) } }
+.floater__in { display: block; animation: tumble3d linear infinite; }
+@keyframes tumble3d { from { transform: rotateX(0) rotateY(0) rotateZ(0) } to { transform: rotateX(360deg) rotateY(720deg) rotateZ(180deg) } }
+.floater__in--ticket {
+  width: 58px; height: 32px; border-radius: 5px;
+  background:
+    linear-gradient(90deg, transparent 72%, rgba(30,38,71,.35) 72% 74%, transparent 74%),
+    radial-gradient(circle at 0 50%, transparent 5px, var(--paper) 5.5px) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 50%, transparent 5px, var(--paper) 5.5px) right / 51% 100% no-repeat;
+}
+.floater__in--ticket.is-gold { --paper: #E8B341; }
+.floater__in--coin { width: 46px; height: 46px; border-radius: 50%; background: url(/coin-192.png) center / cover; box-shadow: 0 0 0 2px #B9821C; }
+
+.garland { position: absolute; top: 64px; left: 0; right: 0; height: 70px; overflow: hidden; pointer-events: none; z-index: 1; }
+.garland svg { position: absolute; left: 50%; top: 0; transform: translateX(-50%); }
+.garland__bulb { animation: twinkle 2.8s ease-in-out infinite; }
+@keyframes twinkle { 0%, 100% { opacity: 1 } 50% { opacity: .45 } }

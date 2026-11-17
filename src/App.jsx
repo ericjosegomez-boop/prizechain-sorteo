@@ -4,6 +4,7 @@ import { useAccount } from 'wagmi'
 import { useState } from 'react'
 import Dashboard from './components/Dashboard'
 import PoolLive from './components/PoolLive'
+import Backdrop, { Garland } from './components/Backdrop'
 import MobileOpenInWallet from './components/MobileOpenInWallet'
 import Tombola from './components/Tombola'
 import TicketCalculator from './components/TicketCalculator'
@@ -22,7 +23,9 @@ export default function App() {
   const s = useSorteo(address)
   return (
     <>
+      <Backdrop />
       <Nav />
+      <Garland />
       {isConnected ? <Dashboard s={s} address={address} /> : <Landing s={s} />}
       <Faq s={s} />
       <Footer />

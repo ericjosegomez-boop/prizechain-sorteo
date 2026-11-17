@@ -74,7 +74,7 @@ export default function Dashboard({ s, address }) {
 
       <div className={'dash__body' + (drawFirst ? ' draw-first' : '')}>
         {/* ── Tu boletera ── */}
-        <div className="stack">
+        <div className="stack mine">
           <Tilt>
             <article className="ticket boletera" aria-label="Tus boletos">
               <div className="boletera__stub" aria-hidden="true">
