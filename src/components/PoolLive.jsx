@@ -45,7 +45,7 @@ export default function PoolLive({ upcomingId }) {
   return (
     <section className="panel stack" aria-labelledby="pool-h">
       <div className="row between">
-        <h2 id="pool-h" className="h3">El premio en vivo</h2>
+        <h2 id="pool-h" className="h3">El pozo en vivo</h2>
         <span className="small muted row" style={{ gap: 8 }}><span className="dot" />Se actualiza solo</span>
       </div>
 
@@ -69,7 +69,7 @@ export default function PoolLive({ upcomingId }) {
             {deposits.map(d => (
               <li key={d.tx + d.at} className="list__row deposit-in">
                 <a href={`https://bscscan.com/tx/${d.tx}`} target="_blank" rel="noreferrer" className="small">{shortAddr(d.addr)}</a>
-                <span className="num gold" style={{ fontSize: 20 }}>+${fmtUsd(d.amount)}</span>
+                <span className="num gold" style={{ fontSize: 15 }}>+${fmtUsd(d.amount)}</span>
               </li>
             ))}
           </ul>
@@ -91,7 +91,7 @@ export default function PoolLive({ upcomingId }) {
                       {st === 3 ? `ganó ${shortAddr(d[8])}` : st === 4 ? 'sin ganador, premio acumulado' : st === 5 ? 'sin boletos' : ''}
                     </span>
                   </span>
-                  {st === 3 && <span className="num gold" style={{ fontSize: 20 }}>${fmtUsd(prize)}</span>}
+                  {st === 3 && <span className="num gold" style={{ fontSize: 15 }}>${fmtUsd(prize)}</span>}
                 </li>
               )
             })}

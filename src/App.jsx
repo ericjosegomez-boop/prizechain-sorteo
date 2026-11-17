@@ -4,13 +4,13 @@ import { useAccount } from 'wagmi'
 import { useState } from 'react'
 import Dashboard from './components/Dashboard'
 import PoolLive from './components/PoolLive'
-import Backdrop, { Garland } from './components/Backdrop'
 import MobileOpenInWallet from './components/MobileOpenInWallet'
 import Tombola from './components/Tombola'
 import TicketCalculator from './components/TicketCalculator'
-import { StatusChip, Reveal, Tilt, useCountUp, fmtInt, fmtUsd, fmtWhen } from './components/ui'
-import { NextMoment, ConnectCta, RoundTicket, BUY_URL } from './components/Bits'
+import { StatusChip, Reveal, Tilt, fmtInt, fmtPrice, fmtWhen } from './components/ui'
+import { NextMoment, ConnectCta, RoundTicket, Jackpot, Stats, Trust, BUY_URL } from './components/Bits'
 import { useSorteo } from './hooks/useSorteo'
+import { usePrizePrice } from './hooks/usePrizePrice'
 import { CONTRACTS } from './config'
 
 // Pega aquí el enlace de YouTube del tutorial cuando lo tengas
@@ -23,9 +23,7 @@ export default function App() {
   const s = useSorteo(address)
   return (
     <>
-      <Backdrop />
       <Nav />
-      <Garland />
       {isConnected ? <Dashboard s={s} address={address} /> : <Landing s={s} />}
       <Faq s={s} />
       <Footer />
@@ -33,16 +31,25 @@ export default function App() {
   )
 }
 
-/* ── Barra superior ─────────────────────────────────────────── */
+/* ── Barra superior, con el precio del token ────────────────── */
 function Nav() {
+  const { price, change, chartUrl } = usePrizePrice()
+  const pct = change == null ? null : Math.abs(change).toLocaleString('es-CL', { maximumFractionDigits: 1 })
   return (
     <header className="nav">
       <div className="wrap wrap--wide nav__in">
-        <a className="brand" href="/" aria-label="PRIZECHAIN Sorteo, inicio">
-          <img src="/coin-192.png" alt="" width="38" height="38" />
-          <span className="brand__word"><b>PRIZE</b>CHAIN</span>
-        </a>
-        <ConnectButton chainStatus="icon" showBalance={false} accountStatus="address" label="Conectar wallet" />
+        <div className="brand">
+          <a href="/" aria-label="PRIZECHAIN Sorteo, inicio"><img src="/coin-192.png" alt="" width="40" height="40" /></a>
+          <div className="brand__txt">
+            <a href="/" className="brand__word" tabIndex={-1} aria-hidden="true"><b>PRIZE</b>CHAIN</a>
+            <a className="price" href={chartUrl} target="_blank" rel="noreferrer"
+              aria-label={`Precio de PRIZE: ${price > 0 ? fmtPrice(price) + ' dólares' : 'no disponible'}${pct ? `, ${change >= 0 ? 'sube' : 'baja'} ${pct}% en 24 horas` : ''}. Ver el gráfico.`}>
+              <strong>{price > 0 ? '$' + fmtPrice(price) : '$ —'}</strong>
+              {pct && <span className={'price__chg ' + (change >= 0 ? 'up' : 'down')}>{change >= 0 ? '▲' : '▼'} {pct}%</span>}
+            </a>
+          </div>
+        </div>
+        <ConnectButton chainStatus="icon" showBalance={false} accountStatus="address" label="Conectar" />
       </div>
     </header>
   )
@@ -50,32 +57,29 @@ function Nav() {
 
 /* ── Portada (sin wallet conectada) ─────────────────────────── */
 function Landing({ s }) {
-  const prize = useCountUp(s.drawPrize, 1200)
   return (
     <main>
       <section className="hero">
         <div className="wrap wrap--wide hero__head">
           <StatusChip status={s.awaiting ? 2 : s.roundStatus} regOpen={s.regOpen} drawReady={s.drawReady && !s.awaiting} />
-          <h1 className="display h1">Tus PRIZE ya son boletos</h1>
+          <h1 className="display h1">Tus PRIZE juegan por ti</h1>
           <p className="lead">
-            Cada semana una tómbola sortea USDT entre los holders registrados.
-            Tus tokens no salen de tu wallet y el ganador lo elige Chainlink.
+            Cada semana, un sorteo en la blockchain reparte el pozo en USDT entre los holders registrados.
+            Sin comprar boletos y sin entregar tus tokens.
           </p>
         </div>
 
         <Tombola pool={s.awaiting ? s.lastPool : s.pool} spinning={s.awaiting} />
 
         <div className="wrap hero__foot">
-          <div className="prize">
-            <span className="num prize__amt">${fmtUsd(prize)}</span>
-            <span className="prize__unit">USDT en juego</span>
-            {s.scheduledAt > 0 && <span className="small muted prize__when">Sorteo el {fmtWhen(s.scheduledAt)}</span>}
-          </div>
+          <Jackpot s={s} />
+          <Stats s={s} />
           <NextMoment s={s} />
           <div className="stack center" style={{ gap: 14 }}>
             <ConnectCta />
             <a className="linkbtn" href="/guia.html">¿Primera vez? Guía paso a paso</a>
           </div>
+          <Trust />
           <MobileOpenInWallet />
         </div>
       </section>
@@ -233,6 +237,9 @@ function Footer() {
           <a href={`https://bscscan.com/address/${CONTRACTS.SORTEO}#code`} target="_blank" rel="noreferrer">Contrato verificado en BscScan</a>
           <a href="https://vrf.chain.link" target="_blank" rel="noreferrer">Chainlink VRF</a>
         </nav>
+        <p className="tiny" style={{ maxWidth: '58ch' }}>
+          Participa con responsabilidad. Solo para mayores de 18 años. El resultado depende del azar y no hay ganancia garantizada.
+        </p>
       </div>
     </footer>
   )

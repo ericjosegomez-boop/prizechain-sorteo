@@ -7,8 +7,9 @@ import { RainbowKitProvider, darkTheme } from '@rainbow-me/rainbowkit'
 import '@rainbow-me/rainbowkit/styles.css'
 
 // Tipografías incluidas en la web (no dependen de Google Fonts)
-import '@fontsource/big-shoulders-display/800'
-import '@fontsource/big-shoulders-display/900'
+import '@fontsource/unbounded/600'
+import '@fontsource/unbounded/700'
+import '@fontsource/unbounded/800'
 import '@fontsource/onest/400'
 import '@fontsource/onest/500'
 import '@fontsource/onest/600'
@@ -21,13 +22,13 @@ import './index.css'
 const queryClient = new QueryClient()
 
 const theme = darkTheme({
-  accentColor:           '#E8B341',
-  accentColorForeground: '#1A1405',
+  accentColor:           '#E3C16F',
+  accentColorForeground: '#1B1405',
   borderRadius:          'large',
   fontStack:             'system',
 })
-theme.colors.modalBackground = '#121F45'
-theme.colors.modalBorder     = '#283B70'
+theme.colors.modalBackground = '#0E1220'
+theme.colors.modalBorder     = '#222840'
 theme.fonts.body             = "'Onest', system-ui, sans-serif"
 
 ReactDOM.createRoot(document.getElementById('root')).render(

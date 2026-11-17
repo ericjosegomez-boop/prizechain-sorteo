@@ -221,7 +221,7 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
       if (!winner) return null
       return (
         <div className={'draw draw--win stack' + (isMe ? ' draw--me' : '')} aria-live="polite">
-          <p className="display" style={{ fontSize: 40 }}>{isMe ? '¡Ganaste!' : 'Tenemos ganador'}</p>
+          <p className="display" style={{ fontSize: 26 }}>{isMe ? '¡Ganaste!' : 'Tenemos ganador'}</p>
           <div className="row between">
             <div>
               <div className="small muted">Wallet ganadora</div>
@@ -231,7 +231,7 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
             </div>
             <div style={{ textAlign: 'right' }}>
               <div className="small muted">Premio enviado</div>
-              <span className="num gold" style={{ fontSize: 34 }}>${fmtUsd(wonAmount != null ? Number(formatUnits(wonAmount, 18)) : prize)}</span>
+              <span className="num gold" style={{ fontSize: 24 }}>${fmtUsd(wonAmount != null ? Number(formatUnits(wonAmount, 18)) : prize)}</span>
             </div>
           </div>
           {winnerTickets > 0 && <p className="small muted">Ganó con {winnerTickets} {winnerTickets === 1 ? 'boleto' : 'boletos'}.</p>}

@@ -34,6 +34,13 @@ export function useCountUp(value, ms = 900) {
 
 export const fmtInt = n => Math.floor(n).toLocaleString('es-CL')
 export const fmtUsd = n => Number(n).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+/** Precio de un token: 2 decimales si vale más de 1, si no 4 cifras significativas. */
+export function fmtPrice(p) {
+  if (!(p > 0)) return '—'
+  return p >= 1
+    ? p.toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : p.toLocaleString('es-CL', { maximumSignificantDigits: 4 })
+}
 export const shortAddr = a => (a ? a.slice(0, 6) + '…' + a.slice(-4) : '')
 
 const DAYS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado']
@@ -133,8 +140,48 @@ export function StatusChip({ status, regOpen, drawReady }) {
 export async function celebrate() {
   if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return
   const { default: confetti } = await import('canvas-confetti')
-  const colors = ['#E8B341', '#F2E6C8', '#3DD6F5', '#C8372D']
+  const colors = ['#E3C16F', '#FBEFC4', '#FFFFFF', '#19C28B']
   confetti({ particleCount: 90, spread: 70, origin: { y: .7 }, colors, scalar: 1.1 })
   setTimeout(() => confetti({ particleCount: 60, angle: 60, spread: 60, origin: { x: 0, y: .75 }, colors }), 180)
   setTimeout(() => confetti({ particleCount: 60, angle: 120, spread: 60, origin: { x: 1, y: .75 }, colors }), 300)
+}
+
+const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+/** El pozo con rodillos: cada cifra gira hasta su número, como una tragamonedas. */
+export function Odometer({ value, prefix = '$' }) {
+  const [live, setLive] = useState(false)
+  useEffect(() => { const t = requestAnimationFrame(() => setLive(true)); return () => cancelAnimationFrame(t) }, [])
+  const txt = prefix + fmtUsd(value || 0)
+  const chars = txt.split('')
+  let reel = 0
+  return (
+    <span className="odo" role="img" aria-label={txt}>
+      {chars.map((c, i) => /\d/.test(c) ? (
+        <span className="odo__reel" key={chars.length - i} aria-hidden="true">
+          <span className="odo__strip" style={{ transform: `translateY(-${(live ? Number(c) : 0) * 10}%)`, transitionDelay: `${reel++ * 110}ms` }}>
+            {DIGITS.map(n => <span key={n}>{n}</span>)}
+          </span>
+        </span>
+      ) : <span className="odo__c" key={chars.length - i} aria-hidden="true">{c}</span>)}
+    </span>
+  )
+}
+
+/** Íconos de línea para los sellos de confianza. */
+export const Icon = {
+  dice: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" /><circle cx="8.5" cy="8.5" r="1" fill="currentColor" /><circle cx="15.5" cy="15.5" r="1" fill="currentColor" /><circle cx="12" cy="12" r="1" fill="currentColor" /><circle cx="15.5" cy="8.5" r="1" fill="currentColor" /><circle cx="8.5" cy="15.5" r="1" fill="currentColor" />
+    </svg>
+  ),
+  shield: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 3l7.5 3v5.5c0 4.6-3 8.1-7.5 9.5-4.5-1.400-7.5-4.900-7.5-9.500V6z" /><path d="M8.800 12.200l2.300 2.300 4.200-4.600" />
+    </svg>
+  ),
+  lock: (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2.5" /><path d="M8 10.500V8a4 4 0 0 1 8 0v2.500" /><circle cx="12" cy="15.500" r="1.200" fill="currentColor" />
+    </svg>
+  ),
 }

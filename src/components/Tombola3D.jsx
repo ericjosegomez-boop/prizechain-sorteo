@@ -40,7 +40,7 @@ function ticketTexture() {
   x.strokeStyle = 'rgba(60,50,30,.55)'; x.lineWidth = 2; x.setLineDash([5, 5])
   x.beginPath(); x.moveTo(94, 4); x.lineTo(94, 68); x.stroke()
   x.setLineDash([]); x.lineWidth = 3; x.strokeStyle = 'rgba(60,50,30,.35)'; x.strokeRect(3, 3, 122, 66)
-  x.fillStyle = '#C8372D'; x.font = '900 30px "Big Shoulders Display", Impact, sans-serif'
+  x.fillStyle = '#C8372D'; x.font = '800 19px Unbounded, Arial, sans-serif'
   x.textBaseline = 'middle'; x.fillText('PRIZE', 12, 38)
   const t = new CanvasTexture(c); t.colorSpace = SRGBColorSpace; t.anisotropy = 4
   return t
@@ -72,7 +72,7 @@ function createTombola(canvas, host, onFail) {
 
   scene.add(new AmbientLight(0xffffff, 0.22))
   const key = new DirectionalLight(0xfff1d6, 2.4); key.position.set(3, 5, 6); scene.add(key)
-  const rim = new PointLight(0x3DD6F5, 40, 14); rim.position.set(-4.5, 1.2, -2.5); scene.add(rim)
+  const rim = new PointLight(0xC8D8FF, 34, 14); rim.position.set(-4.5, 1.2, -2.5); scene.add(rim)
   const glow = new PointLight(0xE8B341, 2.5, 5); glow.position.set(0, 0.2, 0.3); scene.add(glow)
 
   const disposables = []
@@ -80,7 +80,7 @@ function createTombola(canvas, host, onFail) {
 
   const gold  = keep(new MeshStandardMaterial({ color: 0xE8B341, metalness: 1, roughness: 0.24 }))
   const goldD = keep(new MeshStandardMaterial({ color: 0xC9962E, metalness: 1, roughness: 0.38 }))
-  const steel = keep(new MeshStandardMaterial({ color: 0x2C4285, metalness: 0.7, roughness: 0.42 }))
+  const steel = keep(new MeshStandardMaterial({ color: 0x2A3048, metalness: 0.95, roughness: 0.3 }))
   const red   = keep(new MeshStandardMaterial({ color: 0xC8372D, metalness: 0.1, roughness: 0.35 }))
   const cream = keep(new MeshStandardMaterial({ color: 0xF2E6C8, metalness: 0, roughness: 0.6 }))
 
@@ -130,7 +130,12 @@ function createTombola(canvas, host, onFail) {
   for (const x of [-1.2, 1.2]) rig.add(rod(new Vector3(x, FY, -L / 2 - 0.24), new Vector3(x, FY, L / 2 + 0.24), 0.05, steel))
   const shadowTex = keep(shadowTexture())
   const shadow = new Mesh(keep(new PlaneGeometry(5.6, 3.6)), keep(new MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false })))
-  shadow.rotation.x = -Math.PI / 2; shadow.position.y = FY - 0.08; rig.add(shadow)
+  shadow.rotation.x = -Math.PI / 2; shadow.position.y = FY - 0.05; rig.add(shadow)
+  // podio: disco negro brillante con filo dorado
+  const podium = new Mesh(keep(new CylinderGeometry(2.28, 2.4, 0.18, 72)), keep(new MeshStandardMaterial({ color: 0x0B0E18, metalness: 0.9, roughness: 0.2 })))
+  podium.position.y = FY - 0.15; rig.add(podium)
+  const rimRing = new Mesh(keep(new TorusGeometry(2.28, 0.028, 8, 96)), gold)
+  rimRing.rotation.x = Math.PI / 2; rimRing.position.y = FY - 0.06; rig.add(rimRing)
 
   // ── Boletos ──
   const tex = keep(ticketTexture())
@@ -232,8 +237,8 @@ function createTombola(canvas, host, onFail) {
     const w = host.clientWidth || 300, h = host.clientHeight || 300
     renderer.setSize(w, h, false)
     const aspect = w / h, t = Math.tan((camera.fov / 2) * Math.PI / 180)
-    const D = Math.max(2.36 / t, 2.45 / (t * aspect))
-    camera.aspect = aspect; camera.position.set(0, 0.3, D); camera.lookAt(0, -0.46, 0); camera.updateProjectionMatrix()
+    const D = Math.max(2.86 / t, 2.86 / (t * aspect))
+    camera.aspect = aspect; camera.position.set(0, 0.3, D); camera.lookAt(0, -0.66, 0); camera.updateProjectionMatrix()
     const halfW = t * D * aspect
     coinX = Math.max(1.95, Math.min(3.5, halfW * 0.76))
   }

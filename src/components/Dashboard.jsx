@@ -9,7 +9,7 @@ import RegisterButton from './RegisterButton'
 import DrawSection    from './DrawSection'
 import PoolLive       from './PoolLive'
 import RoundHistory   from './RoundHistory'
-import { NextMoment } from './Bits'
+import { NextMoment, Jackpot } from './Bits'
 import { StatusChip, Tilt, useCountUp, fmtInt, fmtUsd, fmtWhen, shortAddr, celebrate } from './ui'
 import { formatUnits } from 'viem'
 
@@ -20,7 +20,6 @@ export default function Dashboard({ s, address }) {
   const [burst, setBurst]         = useState(false)    // la tómbola gira un momento al recibir tus boletos
   const [drawPhase, setDrawPhase] = useState(null)
 
-  const prize = useCountUp(s.drawPrize, 1200)
 
   const isRegistered   = s.myTickets > 0
   const showRegistered = isRegistered || phase === 'done'
@@ -128,10 +127,7 @@ export default function Dashboard({ s, address }) {
             pool={s.awaiting ? s.lastPool : s.pool}
             mine={s.awaiting ? s.lastMine : showRegistered ? shown : 0}
             spinning={spinning} />
-          <div className="prize prize--sm">
-            <span className="num prize__amt">${fmtUsd(prize)}</span>
-            <span className="prize__unit">USDT en juego</span>
-          </div>
+          <Jackpot s={s} small />
           <DrawSection
             roundId={s.upcomingId} scheduledAt={s.scheduledAt} roundStatus={s.roundStatus}
             prizeAmount={(s.roundData && s.roundData[6]) || s.rewardRaw}

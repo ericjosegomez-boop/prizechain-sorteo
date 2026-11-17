@@ -3,7 +3,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useReadContract } from 'wagmi'
 import { formatUnits } from 'viem'
 import { CONTRACTS, SORTEO_ABI } from '../config'
-import { Countdown, fmtUsd, shortAddr } from './ui'
+import { Countdown, Odometer, Icon, fmtInt, fmtUsd, fmtWhen, shortAddr } from './ui'
 
 export const BUY_URL = `https://pancakeswap.finance/swap?chain=bsc&outputCurrency=${CONTRACTS.PRIZE}`
 const ZERO = '0x0000000000000000000000000000000000000000'
@@ -46,11 +46,11 @@ export function RoundTicket({ roundId }) {
   return (
     <article className="ticket ticket--round">
       <div className="stack" style={{ gap: 10 }}>
-        <span className="ticket__serial" style={{ fontSize: 22 }}>Ronda Nº {roundId.toString()}</span>
+        <span className="ticket__serial">Ronda Nº {roundId.toString()}</span>
         {won ? (
           <>
-            <span className="num" style={{ fontSize: 46 }}>${fmtUsd(prize)} <span style={{ fontSize: 20 }}>USDT</span></span>
-            <a className="small" style={{ color: 'var(--paper-ink)', fontWeight: 600 }}
+            <span className="num goldtext" style={{ fontSize: 30, paddingBottom: 3 }}>${fmtUsd(prize)} <span style={{ fontSize: 14 }}>USDT</span></span>
+            <a className="small" style={{ color: 'var(--text)', fontWeight: 600 }}
               href={`https://bscscan.com/address/${r[8]}`} target="_blank" rel="noreferrer">
               Ganó {shortAddr(r[8])}
             </a>
@@ -66,3 +66,43 @@ export function RoundTicket({ roundId }) {
   )
 }
 
+
+const MONTHS = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']
+
+/* ── El pozo, con rodillos ──────────────────────────────────── */
+export function Jackpot({ s, small = false }) {
+  return (
+    <div className={'jackpot' + (small ? ' jackpot--sm' : '')}>
+      <span className="jackpot__label"><span className="dot" />Pozo acumulado</span>
+      <span className="jackpot__row">
+        <Odometer value={s.drawPrize} />
+        <span className="jackpot__unit">USDT</span>
+      </span>
+      {!small && s.scheduledAt > 0 && <span className="small muted">Se sortea el {fmtWhen(s.scheduledAt)}</span>}
+    </div>
+  )
+}
+
+/* ── Tres cifras de la ronda ────────────────────────────────── */
+export function Stats({ s }) {
+  const d = s.scheduledAt ? new Date(s.scheduledAt * 1000) : null
+  const hhmm = d ? `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` : ''
+  return (
+    <dl className="stats">
+      <div className="stat"><dd className="stat__v">{fmtInt(s.awaiting ? s.lastPool : s.pool)}</dd><dt className="stat__l">Boletos en juego</dt></div>
+      <div className="stat"><dd className="stat__v">{s.ticketSize > 0 ? fmtInt(s.ticketSize) : '—'} PRIZE</dd><dt className="stat__l">Valor de un boleto</dt></div>
+      <div className="stat"><dd className="stat__v">{d ? `${d.getDate()} ${MONTHS[d.getMonth()]}` : '—'}</dd><dt className="stat__l">{d ? `Sorteo a las ${hhmm}` : 'Próximo sorteo'}</dt></div>
+    </dl>
+  )
+}
+
+/* ── Sellos de confianza ────────────────────────────────────── */
+export function Trust() {
+  return (
+    <ul className="trust">
+      <li>{Icon.dice}<span><strong>Azar verificable.</strong> El ganador lo elige <a href="https://vrf.chain.link" target="_blank" rel="noreferrer">Chainlink VRF</a>, no una persona.</span></li>
+      <li>{Icon.shield}<span><strong>Contrato público.</strong> Código <a href={`https://bscscan.com/address/${CONTRACTS.SORTEO}#code`} target="_blank" rel="noreferrer">verificado en BscScan</a>.</span></li>
+      <li>{Icon.lock}<span><strong>Sin custodia.</strong> Tus PRIZE nunca salen de tu wallet.</span></li>
+    </ul>
+  )
+}

@@ -1,4 +1,4 @@
-PRIZECHAIN Sorteo: diseño 3D, igual en celular y PC
+PRIZECHAIN Sorteo: diseño premium con precio del token
 ====================================================
 
 Qué cambia: solo el diseño de la página (tómbola 3D, monedas, contador y boletos con relieve). El contrato es el mismo v4

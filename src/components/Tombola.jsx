@@ -36,6 +36,7 @@ export default function Tombola({ pool = 0, mine = 0, spinning = false, caption 
 
   return (
     <figure className="stage">
+      <Dial />
       {use3d ? (
         <Guard onFail={fail}>
           <Suspense fallback={<div className="stage__flat">{flat}</div>}>
@@ -51,6 +52,35 @@ export default function Tombola({ pool = 0, mine = 0, spinning = false, caption 
         </figcaption>
       )}
     </figure>
+  )
+}
+
+/* ── Dial de ruleta (37 casillas) que gira lento detrás de la tómbola ── */
+function Dial() {
+  const N = 37, R1 = 248, R2 = 292, pockets = []
+  const pt = (r, a) => `${(r * Math.cos(a)).toFixed(1)} ${(r * Math.sin(a)).toFixed(1)}`
+  for (let k = 0; k < N; k++) {
+    const a0 = (k / N) * Math.PI * 2, a1 = ((k + 1) / N) * Math.PI * 2
+    pockets.push(
+      <path key={k} d={`M${pt(R1, a0)} L${pt(R2, a0)} A${R2} ${R2} 0 0 1 ${pt(R2, a1)} L${pt(R1, a1)} A${R1} ${R1} 0 0 0 ${pt(R1, a0)}Z`}
+        fill={k === 0 ? 'rgba(25,194,139,.34)' : k % 2 ? 'rgba(240,86,75,.17)' : 'rgba(255,255,255,.035)'}
+        stroke="rgba(227,193,111,.34)" strokeWidth=".8" />,
+    )
+  }
+  return (
+    <div className="dial" aria-hidden="true">
+      <svg viewBox="-300 -300 600 600">
+        {pockets}
+        <circle r="298" fill="none" stroke="rgba(227,193,111,.5)" strokeWidth="1.2" />
+        <circle r="236" fill="none" stroke="rgba(227,193,111,.22)" strokeWidth="1" />
+        <circle r="214" fill="none" stroke="rgba(227,193,111,.3)" strokeWidth="1.4" strokeDasharray="1.5 10" strokeLinecap="round" />
+        {Array.from({ length: 8 }, (_, k) => (
+          <rect key={k} x="-4" y="-4" width="8" height="8" fill="rgba(227,193,111,.5)"
+            transform={`rotate(${k * 45}) translate(0 -190) rotate(45)`} />
+        ))}
+        <circle r="166" fill="none" stroke="rgba(227,193,111,.14)" strokeWidth="1" />
+      </svg>
+    </div>
   )
 }
 
