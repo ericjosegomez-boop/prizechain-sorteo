@@ -36,6 +36,7 @@ export default function Tombola({ pool = 0, mine = 0, spinning = false, caption 
 
   return (
     <figure className="stage">
+      <span className="rays" aria-hidden="true" />
       <Dial />
       {use3d ? (
         <Guard onFail={fail}>

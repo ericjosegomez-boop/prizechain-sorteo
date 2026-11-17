@@ -43,16 +43,13 @@
   color-scheme: dark;
 }
 
+/* el color de fondo va en <html> para que el fondo fijo (.bg) y los focos de las secciones se pinten encima */
 html { -webkit-text-size-adjust: 100%; background: var(--ink); }
 body {
   font-family: var(--f-body);
   font-size: 16px;
   line-height: 1.55;
-  background:
-    radial-gradient(1100px 640px at 50% -80px, rgba(227,193,111,.13), transparent 62%),
-    radial-gradient(900px 700px at 50% 620px, rgba(25,194,139,.05), transparent 65%),
-    var(--ink);
-  background-repeat: no-repeat;
+  background: transparent;
   overflow-x: hidden;
   color: var(--text);
   min-height: 100vh;
@@ -77,7 +74,20 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
 .wrap { width: 100%; max-width: 760px; margin: 0 auto; padding-left: var(--gutter); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
 .wrap--wide { max-width: 1120px; }
 .section { padding-block: clamp(52px, 9vw, 88px); }
-.section + .section, main + .section { border-top: 1px solid var(--hair); }
+.section { position: relative; }
+/* cada sección recibe un foco de luz desde arriba, con un filo dorado que se apaga a los lados */
+.section::before {
+  content: ""; position: absolute; left: 50%; top: 0; transform: translateX(-50%);
+  width: min(100%, 1100px); height: min(340px, 60%); pointer-events: none; z-index: -1;
+  background:
+    linear-gradient(90deg, transparent, rgba(227,193,111,.38) 50%, transparent) top / 100% 1px no-repeat,
+    radial-gradient(ellipse 52% 100% at 50% 0, rgba(227,193,111,.085), transparent 72%);
+}
+.section--felt::before {
+  background:
+    linear-gradient(90deg, transparent, rgba(25,194,139,.36) 50%, transparent) top / 100% 1px no-repeat,
+    radial-gradient(ellipse 52% 100% at 50% 0, rgba(25,194,139,.075), transparent 72%);
+}
 .section__head { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; margin-bottom: 28px; }
 
 /* ── Barra superior con el precio del token ───────────────── */
@@ -370,3 +380,43 @@ a:hover { text-decoration: underline; text-underline-offset: 3px; }
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* ── Fondo de la sala ─────────────────────────────────────── */
+.bg { position: fixed; inset: 0; z-index: -2; overflow: hidden; pointer-events: none; }
+.bg__light { position: absolute; border-radius: 50%; will-change: transform; animation: roam ease-in-out infinite alternate; }
+.bg__light--gold  { width: 120vmax; height: 80vmax; left: 50%; top: -48vmax; margin-left: -60vmax;
+  background: radial-gradient(closest-side, rgba(227,193,111,.15), rgba(227,193,111,.05) 55%, transparent); animation-duration: 38s; --x: 6vw; --y: 4vh; }
+.bg__light--felt  { width: 90vmax; height: 90vmax; left: -42vmax; top: 30vh;
+  background: radial-gradient(closest-side, rgba(25,194,139,.10), rgba(25,194,139,.03) 55%, transparent); animation-duration: 52s; --x: 14vw; --y: -10vh; }
+.bg__light--ruby  { width: 90vmax; height: 90vmax; right: -46vmax; top: 48vh;
+  background: radial-gradient(closest-side, rgba(190,40,62,.12), rgba(190,40,62,.035) 55%, transparent); animation-duration: 61s; --x: -12vw; --y: -14vh; }
+.bg__light--night { width: 80vmax; height: 80vmax; right: -30vmax; top: -30vmax;
+  background: radial-gradient(closest-side, rgba(80,96,200,.10), transparent 70%); animation-duration: 70s; --x: -8vw; --y: 10vh; }
+@keyframes roam { from { transform: translate3d(0, 0, 0) } to { transform: translate3d(var(--x), var(--y), 0) } }
+
+/* patrón art déco de escamas, en línea dorada muy tenue; se ve en los bordes y casi nada al centro */
+.bg__deco {
+  position: absolute; inset: 0; opacity: .085;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='32' viewBox='0 0 64 32'%3E%3Cg fill='none' stroke='%23E3C16F' stroke-width='1'%3E%3Cpath d='M0 32a32 32 0 0 1 64 0M8 32a24 24 0 0 1 48 0M16 32a16 16 0 0 1 32 0'/%3E%3Cpath d='M-32 16a32 32 0 0 1 64 0M32 16a32 32 0 0 1 64 0M-24 16a24 24 0 0 1 48 0M40 16a24 24 0 0 1 48 0M-16 16a16 16 0 0 1 32 0M48 16a16 16 0 0 1 32 0'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 64px 32px;
+  -webkit-mask-image: radial-gradient(ellipse 62% 75% at 50% 42%, rgba(0,0,0,.14) 30%, #000 100%);
+          mask-image: radial-gradient(ellipse 62% 75% at 50% 42%, rgba(0,0,0,.14) 30%, #000 100%);
+}
+.bg__vignette { position: absolute; inset: 0; background: radial-gradient(ellipse 120% 90% at 50% 40%, transparent 55%, rgba(0,0,0,.55) 100%); }
+
+/* rayos dorados detrás de la tómbola, que giran muy lento */
+.rays {
+  position: absolute; left: 50%; top: calc(var(--sh) * .45); width: min(1700px, 230vw); aspect-ratio: 1;
+  transform: translate(-50%, -50%); pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgba(227,193,111,.065) 0deg 1.4deg, transparent 1.4deg 10deg);
+  -webkit-mask-image: radial-gradient(circle, transparent 17%, #000 24%, rgba(0,0,0,.5) 36%, transparent 52%);
+          mask-image: radial-gradient(circle, transparent 17%, #000 24%, rgba(0,0,0,.5) 36%, transparent 52%);
+  animation: dial 400s linear infinite;
+}
+.hero { position: relative; }
+.hero::after { /* piso de la sala: el foco cae sobre el pozo */
+  content: ""; position: absolute; left: 50%; bottom: 0; transform: translateX(-50%); z-index: -1; pointer-events: none;
+  width: min(1100px, 100%); height: 60%;
+  background: radial-gradient(ellipse 50% 60% at 50% 30%, rgba(227,193,111,.06), transparent 70%);
+}
+.dash { position: relative; }

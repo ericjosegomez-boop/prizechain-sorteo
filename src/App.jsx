@@ -9,6 +9,7 @@ import Tombola from './components/Tombola'
 import TicketCalculator from './components/TicketCalculator'
 import { StatusChip, Reveal, Tilt, fmtInt, fmtPrice, fmtWhen } from './components/ui'
 import { NextMoment, ConnectCta, RoundTicket, Jackpot, Stats, Trust, BUY_URL } from './components/Bits'
+import Backdrop from './components/Backdrop'
 import { useSorteo } from './hooks/useSorteo'
 import { usePrizePrice } from './hooks/usePrizePrice'
 import { CONTRACTS } from './config'
@@ -23,6 +24,7 @@ export default function App() {
   const s = useSorteo(address)
   return (
     <>
+      <Backdrop />
       <Nav />
       {isConnected ? <Dashboard s={s} address={address} /> : <Landing s={s} />}
       <Faq s={s} />
@@ -84,7 +86,7 @@ function Landing({ s }) {
         </div>
       </section>
 
-      <section className="section">
+      <section className="section section--felt">
         <div className="wrap">
           <TicketCalculator ticketSize={s.ticketSize} pool={s.pool} />
         </div>
@@ -104,7 +106,7 @@ function Landing({ s }) {
         </section>
       )}
 
-      <section className="section">
+      <section className="section section--felt">
         <Reveal className="wrap"><PoolLive upcomingId={s.upcomingId} /></Reveal>
       </section>
 
