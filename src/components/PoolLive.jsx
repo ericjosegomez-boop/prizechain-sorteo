@@ -1,12 +1,13 @@
 // src/components/PoolLive.jsx
-// Aportes al premio en tiempo real (evento RewardFunded), avance hacia la meta
-// y las últimas rondas. Lee el contrato cada 15 s.
+// El premio en vivo: avance hacia la meta, aportes en tiempo real (USDT que
+// llega al contrato), el formulario para aportar y las últimas rondas. Lee el contrato cada 15 s.
 
 import { useReadContract, useWatchContractEvent } from 'wagmi'
-import { formatUnits } from 'viem'
+import { erc20Abi, formatUnits } from 'viem'
 import { useState } from 'react'
 import { CONTRACTS, SORTEO_ABI } from '../config'
 import { fmtUsd, shortAddr } from './ui'
+import FundReward from './FundReward'
 
 // Meta que se muestra en la barra. Cámbiala cuando quieras.
 const PRIZE_TARGET_USDT = 500
@@ -25,12 +26,13 @@ export default function PoolLive({ upcomingId }) {
   const r2 = useReadContract({ address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'rounds', args: [prevIds[1]], query: { enabled: !!prevIds[1] } })
   const r3 = useReadContract({ address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'rounds', args: [prevIds[2]], query: { enabled: !!prevIds[2] } })
 
+  // Cualquier USDT que llega al contrato es un aporte (desde la web o desde BscScan).
   useWatchContractEvent({
-    address: CONTRACTS.SORTEO, abi: SORTEO_ABI, eventName: 'RewardFunded',
+    address: CONTRACTS.USDT, abi: erc20Abi, eventName: 'Transfer', args: { to: CONTRACTS.SORTEO },
     onLogs(logs) {
       logs.forEach(log => {
-        const amount = log.args.amount ? Number(formatUnits(log.args.amount, 18)) : 0
-        setDeposits(prev => [{ addr: log.args.funder, amount, at: Date.now(), tx: log.transactionHash }, ...prev].slice(0, 5))
+        const amount = log.args.value ? Number(formatUnits(log.args.value, 18)) : 0
+        setDeposits(prev => [{ addr: log.args.from, amount, at: Date.now(), tx: log.transactionHash }, ...prev].slice(0, 5))
       })
       refetchReward()
     },
@@ -56,6 +58,8 @@ export default function PoolLive({ upcomingId }) {
         </div>
       </div>
 
+      <FundReward />
+
       <div className="stack" style={{ gap: 4 }}>
         <p className="small" style={{ fontWeight: 600 }}>Últimos aportes al premio</p>
         {deposits.length === 0 ? (
@@ -71,10 +75,6 @@ export default function PoolLive({ upcomingId }) {
           </ul>
         )}
       </div>
-
-      <a className="btn btn--ghost btn--block" href={`https://bscscan.com/address/${CONTRACTS.SORTEO}#writeContract`} target="_blank" rel="noreferrer">
-        Aportar USDT al premio en BscScan
-      </a>
 
       {history.length > 0 && (
         <div className="stack" style={{ gap: 4 }}>

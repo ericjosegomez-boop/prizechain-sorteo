@@ -3,6 +3,7 @@ import { ConnectButton } from '@rainbow-me/rainbowkit'
 import { useAccount } from 'wagmi'
 import { useState } from 'react'
 import Dashboard from './components/Dashboard'
+import PoolLive from './components/PoolLive'
 import MobileOpenInWallet from './components/MobileOpenInWallet'
 import Tombola from './components/Tombola'
 import TicketCalculator from './components/TicketCalculator'
@@ -95,6 +96,10 @@ function Landing({ s }) {
           </Reveal>
         </section>
       )}
+
+      <section className="section">
+        <Reveal className="wrap"><PoolLive upcomingId={s.upcomingId} /></Reveal>
+      </section>
 
       <Winners s={s} />
     </main>

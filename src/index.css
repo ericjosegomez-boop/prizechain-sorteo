@@ -339,3 +339,12 @@ body::before { /* luces de feria al fondo */
   *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
   .reveal { opacity: 1; transform: none; }
 }
+
+/* ── Aportar al premio ────────────────────────────────────── */
+.fund { padding: 16px; border-radius: var(--r-md); background: rgba(12,22,51,.55); border: 1px solid var(--line); }
+.fund__field { position: relative; }
+.fund__field .input-num { padding-left: 38px; padding-right: 76px; font-size: 34px; }
+.fund__cur, .fund__unit { position: absolute; top: 50%; transform: translateY(-50%); font-family: var(--f-display); font-weight: 800; pointer-events: none; }
+.fund__cur { left: 14px; font-size: 30px; color: var(--gold); }
+.fund__unit { right: 14px; font-size: 20px; color: var(--muted); }
+.fund .seg button[aria-selected="true"] { background: var(--gold); color: #1A1405; font-weight: 700; }
