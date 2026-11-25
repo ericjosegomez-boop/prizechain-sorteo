@@ -9,7 +9,8 @@
 // de "approve" que pide fundReward() en BscScan.
 
 import { useEffect, useState } from 'react'
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useAccount, useReadContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useSafeWrite } from '../hooks/useSafeWrite'
 import { useQueryClient } from '@tanstack/react-query'
 import { erc20Abi, formatUnits, parseUnits } from 'viem'
 import { CONTRACTS } from '../config'
@@ -36,7 +37,7 @@ export default function FundReward() {
     address: CONTRACTS.USDT, abi: erc20Abi, functionName: 'balanceOf', args: [address],
     query: { enabled: !!address, refetchInterval: 30_000 },
   })
-  const { writeContract, data: txHash, isPending, error, reset } = useWriteContract()
+  const { send: writeContract, data: txHash, isPending, error, reset } = useSafeWrite()
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash })
 
   // acepta "5", "5,5" o "5.50"

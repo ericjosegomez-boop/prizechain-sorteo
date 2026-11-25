@@ -1,5 +1,5 @@
-PRIZECHAIN Sorteo: diseño premium con precio del token
-====================================================
+PRIZECHAIN Sorteo: arreglo del registro con Trust Wallet
+=======================================================
 
 Qué cambia: solo el diseño de la página (tómbola 3D, monedas, contador y boletos con relieve). El contrato es el mismo v4
 (0x9c2e3196B3e84B9d051391D6D392F29FD138ae5C) y la web lo usa igual que antes.

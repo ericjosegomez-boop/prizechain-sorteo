@@ -2,7 +2,8 @@
 // Registro en la ronda: una sola transacción a register(). El contrato lee tu
 // saldo de PRIZE y te asigna los boletos; tus tokens no se mueven.
 
-import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi'
+import { useWaitForTransactionReceipt } from 'wagmi'
+import { useSafeWrite, rawReason } from '../hooks/useSafeWrite'
 import { useEffect } from 'react'
 import { CONTRACTS, SORTEO_ABI } from '../config'
 import { BUY_URL } from './Bits'
@@ -19,7 +20,8 @@ function errorText(err) {
   if (m.includes('Ticket pool full'))          return 'La tómbola de esta ronda está llena.'
   if (m.includes('PRIZE token paused'))        return 'El token PRIZE está en pausa. Intenta más tarde.'
   if (m.includes('Excluded'))                  return 'Esta wallet no puede participar en el sorteo.'
-  if (/insufficient funds|gas/i.test(m))       return 'Te falta BNB para pagar el gas. Basta con unos centavos de dólar en BNB.'
+  if (/insufficient funds|exceeds the balance|gas required exceeds/i.test(m)) return 'Te falta BNB para pagar el gas. Basta con unos centavos de dólar en BNB (red BSC).'
+  if (/chain|network/i.test(m))                return 'Tu wallet está en otra red. Cámbiala a BNB Smart Chain e intenta de nuevo.'
   return 'No se pudo registrar. Revisa tu wallet e intenta de nuevo.'
 }
 
@@ -27,13 +29,13 @@ export default function RegisterButton({
   isRegistered, tickets, registeredTickets, regOpen, isPaused,
   balance, ticketSize, roundSize, pool, onSuccess,
 }) {
-  const { writeContract, data: txHash, isPending, error: writeError } = useWriteContract()
+  const { send, checking, data: txHash, isPending, error: writeError } = useSafeWrite()
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash: txHash })
 
   useEffect(() => { if (isSuccess) onSuccess() }, [isSuccess])
 
   function handleRegister() {
-    writeContract({ address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'register' })
+    send({ address: CONTRACTS.SORTEO, abi: SORTEO_ABI, functionName: 'register' })
   }
 
   const txLink = txHash && (
@@ -89,8 +91,8 @@ export default function RegisterButton({
     return (
       <div className="panel stack" style={{ alignItems: 'center', textAlign: 'center', gap: 10 }} aria-live="polite">
         <div className="spinner" />
-        <strong>{isPending ? 'Confirma el registro en tu wallet' : 'Registrando tus boletos en BSC…'}</strong>
-        <span className="small muted">{isPending ? 'Revisa MetaMask o Trust Wallet.' : 'Suele tardar unos segundos.'}</span>
+        <strong>{checking ? 'Preparando tu registro…' : isPending ? 'Confirma el registro en tu wallet' : 'Registrando tus boletos en BSC…'}</strong>
+        <span className="small muted">{checking ? 'Revisando la transacción antes de abrir tu wallet.' : isPending ? 'Revisa MetaMask o Trust Wallet y toca Confirmar.' : 'Suele tardar unos segundos.'}</span>
         {txLink}
       </div>
     )
@@ -99,7 +101,12 @@ export default function RegisterButton({
   const chance = (tickets / (pool + tickets)) * 100
   return (
     <div className="stack" style={{ gap: 10 }}>
-      {writeError && <p className="note note--bad" role="alert">{errorText(writeError)}</p>}
+      {writeError && (
+        <div className="note note--bad stack" role="alert" style={{ gap: 4 }}>
+          <span>{errorText(writeError)}</span>
+          <span className="tiny">Detalle: {rawReason(writeError)}</span>
+        </div>
+      )}
       <button className="btn btn--gold btn--block btn--big" onClick={handleRegister}>
         {writeError ? 'Intentar de nuevo' : `Registrarme con ${tickets} ${plural(tickets)}`}
       </button>

@@ -13,7 +13,8 @@
 // WinnerSelected / RoundClosedWithoutWinner.
 
 import { useState, useEffect } from 'react'
-import { useWriteContract, useWaitForTransactionReceipt, useWatchContractEvent, useReadContract, useAccount } from 'wagmi'
+import { useWaitForTransactionReceipt, useWatchContractEvent, useReadContract, useAccount } from 'wagmi'
+import { useSafeWrite } from '../hooks/useSafeWrite'
 import { formatUnits, keccak256, toHex } from 'viem'
 import { CONTRACTS, SORTEO_ABI } from '../config'
 import { fmtUsd, shortAddr, celebrate } from './ui'
@@ -116,7 +117,7 @@ export default function DrawSection({ roundId, scheduledAt, roundStatus, prizeAm
   })
 
   // ── Escribir: advance / retryDraw ─────────────────────────
-  const { writeContract, isPending: isSending, error: writeErr } = useWriteContract()
+  const { send: writeContract, isPending: isSending, error: writeErr } = useSafeWrite()
   const { isSuccess: txConfirmed, data: receipt } = useWaitForTransactionReceipt({ hash: txHash })
 
   useEffect(() => {
